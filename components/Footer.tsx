@@ -1,23 +1,6 @@
 import Link from 'next/link'
-import { MessageCircle, MapPin, Mail, Phone } from 'lucide-react'
-
-function IconFacebook() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
-    </svg>
-  )
-}
-
-function IconInstagram() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-    </svg>
-  )
-}
+import Image from 'next/image'
+import { MapPin, Mail, Phone } from 'lucide-react'
 
 export default function Footer() {
   return (
@@ -30,33 +13,15 @@ export default function Footer() {
             <p className="text-sm opacity-80 leading-relaxed">
               Representando a los vecinos del Barrio General Mosconi, Comodoro Rivadavia, desde 1970.
             </p>
-            <div className="flex gap-4 mt-4">
-              <a
-                href="https://www.facebook.com/vecinalmosconikm3"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:opacity-70 transition-opacity"
-                aria-label="Facebook"
-              >
-                <IconFacebook />
+            <div className="flex gap-4 mt-4 items-center">
+              <a href="https://www.facebook.com/vecinalmosconikm3" target="_blank" rel="noopener noreferrer" className="hover:opacity-70 transition-opacity" aria-label="Facebook">
+                <Image src="/facebook.png" alt="Facebook" width={32} height={32} />
               </a>
-              <a
-                href="https://www.instagram.com/asociacionvecinalmosconi"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:opacity-70 transition-opacity"
-                aria-label="Instagram"
-              >
-                <IconInstagram />
+              <a href="https://www.instagram.com/asociacionvecinalmosconi" target="_blank" rel="noopener noreferrer" className="hover:opacity-70 transition-opacity" aria-label="Instagram">
+                <Image src="/instagram.png" alt="Instagram" width={32} height={32} />
               </a>
-              <a
-                href="https://wa.me/5492975402989"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:opacity-70 transition-opacity"
-                aria-label="WhatsApp"
-              >
-                <MessageCircle size={24} />
+              <a href="https://wa.me/5492975402989" target="_blank" rel="noopener noreferrer" className="hover:opacity-70 transition-opacity" aria-label="WhatsApp">
+                <Image src="/whatsapp.png" alt="WhatsApp" width={32} height={32} />
               </a>
             </div>
           </div>

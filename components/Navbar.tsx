@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Menu, X } from 'lucide-react'
 
 const links = [
@@ -23,9 +24,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
-            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center font-bold text-[#1E88E5] text-sm">
-              AV
-            </div>
+            <Image src="/logo.png" alt="Logo Vecinal Mosconi" width={40} height={40} className="rounded-full bg-white p-0.5" />
             <div className="text-white leading-tight">
               <div className="font-bold text-sm">Vecinal</div>
               <div className="text-xs opacity-90">Gral. Mosconi</div>
