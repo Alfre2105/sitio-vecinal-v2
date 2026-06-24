@@ -107,7 +107,7 @@ export default function FormularioReserva({ fecha, onExito }: Props) {
         </div>
         <div>
           <label className="block text-sm font-medium text-[#212121] mb-1">Cantidad de personas *</label>
-          <input name="cantidad_personas" type="number" min="1" max="200" required className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#1E88E5]" placeholder="Ej: 50" />
+          <input name="cantidad_personas" type="number" min="1" max="100" required className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#1E88E5]" placeholder="Ej: 50" />
         </div>
       </div>
 

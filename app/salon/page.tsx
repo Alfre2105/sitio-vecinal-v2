@@ -7,7 +7,7 @@ export const metadata = {
 }
 
 const condiciones = [
-  { icono: Users, texto: 'Capacidad máxima: 150 personas' },
+  { icono: Users, texto: 'Capacidad máxima: 100 personas' },
   { icono: Clock, texto: 'Reservas mínimo 48hs antes del evento' },
   { icono: DollarSign, texto: 'Consultar precio según tipo de evento y cantidad de personas' },
   { icono: CheckCircle, texto: 'Incluye mesas, sillas y cocina básica' },
