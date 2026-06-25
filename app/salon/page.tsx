@@ -51,17 +51,13 @@ export default function SalonPage() {
             </ul>
           </div>
 
-          {/* Fotos placeholder */}
+          {/* Fotos del salón */}
           <div className="bg-white rounded-2xl shadow-sm p-6">
             <h2 className="font-bold text-[#212121] text-lg mb-4">Fotos del salón</h2>
             <div className="grid grid-cols-2 gap-2">
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="aspect-video rounded-xl bg-gradient-to-br from-[#E3F2FD] to-[#E8F5E9] flex items-center justify-center">
-                  <span className="text-[#9E9E9E] text-xs">Foto {i}</span>
-                </div>
-              ))}
+              <img src="/salon-1.jpg" alt="Salón comunitario" className="rounded-xl aspect-video object-cover w-full" />
+              <img src="/salon-2.jpg" alt="Salón comunitario" className="rounded-xl aspect-video object-cover w-full" />
             </div>
-            <p className="text-xs text-[#9E9E9E] mt-2 text-center">Próximamente más fotos</p>
           </div>
 
           {/* Contacto directo */}
