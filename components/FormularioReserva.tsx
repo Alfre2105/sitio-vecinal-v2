@@ -13,6 +13,7 @@ export default function FormularioReserva({ fecha, onExito }: Props) {
   const [cargando, setCargando] = useState(false)
   const [enviado, setEnviado] = useState(false)
   const [error, setError] = useState('')
+  const [terminaSiguienteDia, setTerminaSiguienteDia] = useState(false)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -25,8 +26,8 @@ export default function FormularioReserva({ fecha, onExito }: Props) {
     const horaInicio = data.get('hora_inicio') as string
     const horaFin = data.get('hora_fin') as string
 
-    if (horaInicio >= horaFin) {
-      setError('La hora de fin debe ser posterior a la hora de inicio.')
+    if (!terminaSiguienteDia && horaInicio >= horaFin) {
+      setError('La hora de fin debe ser posterior a la hora de inicio. Si el evento termina al día siguiente, marcá la opción correspondiente.')
       setCargando(false)
       return
     }
@@ -99,6 +100,12 @@ export default function FormularioReserva({ fecha, onExito }: Props) {
           <input name="hora_fin" type="time" required className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#1E88E5]" />
         </div>
       </div>
+
+      <label className="flex items-center gap-2 cursor-pointer text-sm text-[#616161]">
+        <input type="checkbox" className="accent-[#1E88E5] w-4 h-4"
+          checked={terminaSiguienteDia} onChange={e => setTerminaSiguienteDia(e.target.checked)} />
+        El evento termina al día siguiente (ej: fiesta de noche)
+      </label>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>

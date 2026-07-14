@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { CheckCircle, XCircle, Clock } from 'lucide-react'
+import { CheckCircle, XCircle, Clock, Plus, X } from 'lucide-react'
 
 type Reserva = {
   id: string
@@ -24,10 +24,19 @@ const ESTADO_CONFIG = {
   cancelada: { label: 'Cancelada', cls: 'bg-red-100 text-red-600', icono: XCircle },
 }
 
+const FORM_INICIAL = {
+  nombre: '', telefono: '', email: '', fecha: '', hora_inicio: '',
+  hora_fin: '', motivo: '', cantidad_personas: 1, estado: 'confirmada' as Reserva['estado'],
+}
+
 export default function AdminReservasPage() {
   const [reservas, setReservas] = useState<Reserva[]>([])
   const [cargando, setCargando] = useState(true)
   const [filtro, setFiltro] = useState<'todas' | 'pendiente' | 'confirmada' | 'cancelada'>('todas')
+  const [mostrarForm, setMostrarForm] = useState(false)
+  const [form, setForm] = useState(FORM_INICIAL)
+  const [guardando, setGuardando] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     cargar()
@@ -43,6 +52,31 @@ export default function AdminReservasPage() {
     setCargando(false)
   }
 
+  async function guardarReserva() {
+    setError(null)
+    if (!form.nombre.trim() || !form.fecha || !form.hora_inicio || !form.hora_fin) {
+      setError('Nombre, fecha y horarios son obligatorios.')
+      return
+    }
+    setGuardando(true)
+    const { error: err } = await supabase.from('reservas_salon').insert({
+      nombre: form.nombre.trim(),
+      telefono: form.telefono.trim() || '-',
+      email: form.email.trim() || '-',
+      fecha: form.fecha,
+      hora_inicio: form.hora_inicio,
+      hora_fin: form.hora_fin,
+      motivo: form.motivo.trim() || '-',
+      cantidad_personas: form.cantidad_personas,
+      estado: form.estado,
+    })
+    setGuardando(false)
+    if (err) { setError('Error al guardar. Intentá de nuevo.'); return }
+    setMostrarForm(false)
+    setForm(FORM_INICIAL)
+    cargar()
+  }
+
   async function cambiarEstado(id: string, estado: Reserva['estado']) {
     await supabase.from('reservas_salon').update({ estado }).eq('id', id)
     setReservas(prev => prev.map(r => r.id === id ? { ...r, estado } : r))
@@ -54,7 +88,7 @@ export default function AdminReservasPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-[#212121]">Reservas del Salón</h1>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {(['todas','pendiente','confirmada','cancelada'] as const).map(f => (
             <button
               key={f}
@@ -64,8 +98,89 @@ export default function AdminReservasPage() {
               {f}
             </button>
           ))}
+          <button
+            onClick={() => setMostrarForm(v => !v)}
+            className="text-xs font-semibold px-3 py-1.5 rounded-full bg-[#1E88E5] text-white flex items-center gap-1 hover:bg-[#1565C0] transition-colors"
+          >
+            <Plus size={14} /> Nueva reserva
+          </button>
         </div>
       </div>
+
+      {/* Formulario nueva reserva */}
+      {mostrarForm && (
+        <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 border border-blue-100">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-[#212121]">Cargar reserva presencial</h2>
+            <button onClick={() => { setMostrarForm(false); setForm(FORM_INICIAL); setError(null) }}>
+              <X size={18} className="text-[#9E9E9E] hover:text-[#212121]" />
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2">
+              <label className="text-xs font-semibold text-[#616161] block mb-1">Nombre *</label>
+              <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#1E88E5]"
+                value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-[#616161] block mb-1">Teléfono</label>
+              <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#1E88E5]"
+                value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-[#616161] block mb-1">Email</label>
+              <input type="email" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#1E88E5]"
+                value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-[#616161] block mb-1">Fecha *</label>
+              <input type="date" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#1E88E5]"
+                value={form.fecha} onChange={e => setForm(f => ({ ...f, fecha: e.target.value }))} />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-[#616161] block mb-1">Cantidad de personas</label>
+              <input type="number" min={1} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#1E88E5]"
+                value={form.cantidad_personas} onChange={e => setForm(f => ({ ...f, cantidad_personas: Number(e.target.value) }))} />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-[#616161] block mb-1">Hora inicio *</label>
+              <input type="time" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#1E88E5]"
+                value={form.hora_inicio} onChange={e => setForm(f => ({ ...f, hora_inicio: e.target.value }))} />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-[#616161] block mb-1">Hora fin *</label>
+              <input type="time" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#1E88E5]"
+                value={form.hora_fin} onChange={e => setForm(f => ({ ...f, hora_fin: e.target.value }))} />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="text-xs font-semibold text-[#616161] block mb-1">Motivo</label>
+              <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#1E88E5]"
+                placeholder="Ej: Cumpleaños, Reunión, Evento..."
+                value={form.motivo} onChange={e => setForm(f => ({ ...f, motivo: e.target.value }))} />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-[#616161] block mb-1">Estado</label>
+              <select className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#1E88E5]"
+                value={form.estado} onChange={e => setForm(f => ({ ...f, estado: e.target.value as Reserva['estado'] }))}>
+                <option value="confirmada">Confirmada</option>
+                <option value="pendiente">Pendiente</option>
+                <option value="cancelada">Cancelada</option>
+              </select>
+            </div>
+          </div>
+          {error && <p className="text-red-600 text-sm mt-3">{error}</p>}
+          <div className="mt-4 flex justify-end gap-2">
+            <button onClick={() => { setMostrarForm(false); setForm(FORM_INICIAL); setError(null) }}
+              className="text-sm px-4 py-2 rounded-xl border border-gray-200 text-[#616161] hover:bg-gray-50">
+              Cancelar
+            </button>
+            <button onClick={guardarReserva} disabled={guardando}
+              className="text-sm px-4 py-2 rounded-xl bg-[#1E88E5] text-white font-semibold hover:bg-[#1565C0] disabled:opacity-50">
+              {guardando ? 'Guardando...' : 'Guardar reserva'}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-3">
         {cargando ? (
