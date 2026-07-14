@@ -50,12 +50,11 @@ const accesosRapidos = [
     color: 'bg-orange-50 text-orange-600 border-orange-100',
   },
   {
-    href: 'https://mosconiservicos.vercel.app',
+    href: '/servicios',
     icono: Wrench,
     titulo: 'Mosconi Servicios',
     desc: 'Trabajadores y servicios del barrio',
     color: 'bg-purple-50 text-purple-600 border-purple-100',
-    externo: true,
   },
 ]
 
