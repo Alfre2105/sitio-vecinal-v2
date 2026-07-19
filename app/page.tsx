@@ -110,24 +110,17 @@ export default async function Home() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {accesosRapidos.map((item) => {
             const Icono = item.icono
-            const contenido = (
-              <div className={`rounded-2xl border-2 p-6 flex flex-col items-center text-center gap-3 hover:shadow-md transition-shadow cursor-pointer h-full ${item.color}`}>
-                <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-sm">
-                  <Icono size={28} />
-                </div>
-                <div>
-                  <div className="font-bold text-[#212121] text-base">{item.titulo}</div>
-                  <div className="text-[#616161] text-sm mt-1">{item.desc}</div>
-                </div>
-              </div>
-            )
-            return item.externo ? (
-              <a key={item.href} href={item.href} target="_blank" rel="noopener noreferrer">
-                {contenido}
-              </a>
-            ) : (
+            return (
               <Link key={item.href} href={item.href}>
-                {contenido}
+                <div className={`rounded-2xl border-2 p-6 flex flex-col items-center text-center gap-3 hover:shadow-md transition-shadow cursor-pointer h-full ${item.color}`}>
+                  <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-sm">
+                    <Icono size={28} />
+                  </div>
+                  <div>
+                    <div className="font-bold text-[#212121] text-base">{item.titulo}</div>
+                    <div className="text-[#616161] text-sm mt-1">{item.desc}</div>
+                  </div>
+                </div>
               </Link>
             )
           })}
