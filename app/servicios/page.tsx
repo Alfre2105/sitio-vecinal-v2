@@ -57,14 +57,11 @@ export default function ServiciosPage() {
       <div className="text-center">
         <a
           href="https://mosconi-servicios-fwxc.vercel.app"
-          target="_blank"
-          rel="noopener noreferrer"
           className="inline-flex items-center gap-2 bg-[#1E88E5] hover:bg-[#1565C0] text-white font-bold px-8 py-4 rounded-2xl text-lg transition-colors shadow-md"
         >
           Ir a Mosconi Servicios
           <ArrowRight className="w-5 h-5" />
         </a>
-        <p className="text-sm text-[#9E9E9E] mt-3">Se abre en una nueva pestaña</p>
       </div>
 
       {/* Nota */}
