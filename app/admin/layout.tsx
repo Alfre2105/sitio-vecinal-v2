@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { LayoutDashboard, Newspaper, Calendar, Users, Building2, MessageSquare, BarChart3 } from 'lucide-react'
+import AdminGuard from '@/components/AdminGuard'
 
 const navAdmin = [
   { href: '/admin', label: 'Dashboard', icono: LayoutDashboard },
@@ -13,6 +14,7 @@ const navAdmin = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
+    <AdminGuard>
     <div className="flex min-h-screen bg-[#F4F6F9]">
       {/* Sidebar */}
       <aside className="w-64 bg-[#1565C0] text-white flex-col hidden md:flex">
@@ -63,5 +65,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <main className="p-6">{children}</main>
       </div>
     </div>
+    </AdminGuard>
   )
 }
