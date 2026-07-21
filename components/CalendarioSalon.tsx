@@ -25,8 +25,9 @@ export default function CalendarioSalon() {
 
   async function cargarReservas() {
     setCargando(true)
+    const ultimoDia = new Date(anio, mes + 1, 0).getDate()
     const inicio = `${anio}-${String(mes + 1).padStart(2, '0')}-01`
-    const fin = `${anio}-${String(mes + 1).padStart(2, '0')}-31`
+    const fin = `${anio}-${String(mes + 1).padStart(2, '0')}-${String(ultimoDia).padStart(2, '0')}`
 
     const { data } = await supabase
       .from('reservas_salon')
