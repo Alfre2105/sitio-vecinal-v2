@@ -170,7 +170,13 @@ ALTER TABLE contacto_mensajes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE historial_barrio ENABLE ROW LEVEL SECURITY;
 
 -- Políticas de lectura pública (tablas públicas)
-CREATE POLICY "Noticias publicadas son públicas" ON noticias FOR SELECT USING (publicada = true);
+-- Nota: el filtro publicada=true para la portada pública se aplica en la query
+-- de la app (app/page.tsx, app/noticias/[slug]/page.tsx), no en RLS, porque el
+-- panel /admin/noticias (protegido por contraseña) necesita ver y gestionar borradores.
+CREATE POLICY "Lectura de noticias" ON noticias FOR SELECT USING (true);
+CREATE POLICY "Insertar noticias" ON noticias FOR INSERT WITH CHECK (true);
+CREATE POLICY "Actualizar noticias" ON noticias FOR UPDATE USING (true);
+CREATE POLICY "Eliminar noticias" ON noticias FOR DELETE USING (true);
 CREATE POLICY "Actividades son públicas" ON actividades FOR SELECT USING (true);
 CREATE POLICY "Comisión es pública" ON comision_directiva FOR SELECT USING (activo = true);
 CREATE POLICY "Comercios activos son públicos" ON comercios FOR SELECT USING (activo = true);
@@ -179,6 +185,11 @@ CREATE POLICY "Historial es público" ON historial_barrio FOR SELECT USING (true
 -- Cualquiera puede insertar mensajes de contacto y reservas
 CREATE POLICY "Insertar mensajes de contacto" ON contacto_mensajes FOR INSERT WITH CHECK (true);
 CREATE POLICY "Insertar reservas" ON reservas_salon FOR INSERT WITH CHECK (true);
+-- Nota: en producción también se habilitaron SELECT y UPDATE en reservas_salon
+-- para anon (agregado julio 2026, no reflejado aquí originalmente) para que el
+-- panel admin pueda listar, confirmar/cancelar y editar reservas.
+CREATE POLICY "Ver reservas" ON reservas_salon FOR SELECT USING (true);
+CREATE POLICY "Actualizar reservas" ON reservas_salon FOR UPDATE USING (true);
 
 -- Socios pueden ver sus propios datos (requiere auth configurada)
 CREATE POLICY "Socios ven sus datos" ON socios FOR SELECT USING (true);
