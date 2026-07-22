@@ -9,9 +9,15 @@ export async function POST(request: Request) {
 
   const formData = await request.formData()
   const file = formData.get('file') as File | null
+  const bucket = formData.get('bucket') as string | null
 
   if (!file || !file.type.startsWith('image/')) {
     return NextResponse.json({ error: 'Archivo inválido.' }, { status: 400 })
+  }
+
+  const bucketsPermitidos = ['noticias', 'actividades']
+  if (!bucket || !bucketsPermitidos.includes(bucket)) {
+    return NextResponse.json({ error: 'Destino inválido.' }, { status: 400 })
   }
 
   const supabase = createClient(
@@ -23,14 +29,14 @@ export async function POST(request: Request) {
   const nombreArchivo = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extension}`
 
   const { error } = await supabase.storage
-    .from('noticias')
+    .from(bucket)
     .upload(nombreArchivo, file, { contentType: file.type })
 
   if (error) {
     return NextResponse.json({ error: 'Error al subir la imagen.' }, { status: 500 })
   }
 
-  const { data } = supabase.storage.from('noticias').getPublicUrl(nombreArchivo)
+  const { data } = supabase.storage.from(bucket).getPublicUrl(nombreArchivo)
 
   return NextResponse.json({ url: data.publicUrl })
 }

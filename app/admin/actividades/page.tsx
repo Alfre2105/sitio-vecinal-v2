@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Plus, Trash2, Check, X } from 'lucide-react'
+import { subirImagen } from '@/lib/subirImagen'
+import { Plus, Trash2, Check, X, ImagePlus } from 'lucide-react'
 
 type Actividad = {
   id: string
@@ -16,6 +17,7 @@ type Actividad = {
   precio: number | null
   responsable: string | null
   contacto_inscripcion: string | null
+  imagen_url: string | null
   origen: 'vecinal' | 'vecino'
   estado: 'pendiente' | 'aprobada' | 'rechazada'
   nombre_propone: string | null
@@ -28,8 +30,31 @@ export default function AdminActividadesPage() {
   const [mostrarForm, setMostrarForm] = useState(false)
   const [guardando, setGuardando] = useState(false)
   const [aprobandoId, setAprobandoId] = useState<string | null>(null)
+  const [subiendoId, setSubiendoId] = useState<string | null>(null)
+  const inputImagenRef = useRef<HTMLInputElement>(null)
+  const idParaImagen = useRef<string | null>(null)
 
   useEffect(() => { cargar() }, [])
+
+  function abrirSelectorImagen(id: string) {
+    idParaImagen.current = id
+    inputImagenRef.current?.click()
+  }
+
+  async function handleImagenExistente(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    const id = idParaImagen.current
+    e.target.value = ''
+    if (!file || !id) return
+
+    setSubiendoId(id)
+    const url = await subirImagen(file, 'actividades')
+    if (url) {
+      await supabase.from('actividades').update({ imagen_url: url }).eq('id', id)
+      setActividades(prev => prev.map(a => a.id === id ? { ...a, imagen_url: url } : a))
+    }
+    setSubiendoId(null)
+  }
 
   async function cargar() {
     setCargando(true)
@@ -55,6 +80,13 @@ export default function AdminActividadesPage() {
     setGuardando(true)
     const form = e.currentTarget
     const data = new FormData(form)
+
+    const archivo = data.get('imagen') as File
+    let imagen_url: string | null = null
+    if (archivo && archivo.size > 0) {
+      imagen_url = await subirImagen(archivo, 'actividades')
+    }
+
     await supabase.from('actividades').insert({
       titulo: data.get('titulo') as string,
       descripcion: data.get('descripcion') as string,
@@ -66,6 +98,7 @@ export default function AdminActividadesPage() {
       precio: data.get('es_gratuita') === 'false' ? parseFloat(data.get('precio') as string) : null,
       responsable: data.get('responsable') as string,
       contacto_inscripcion: data.get('contacto_inscripcion') as string,
+      imagen_url,
       origen: 'vecinal',
       estado: 'aprobada',
     })
@@ -80,6 +113,13 @@ export default function AdminActividadesPage() {
     setGuardando(true)
     const form = e.currentTarget
     const data = new FormData(form)
+
+    const archivo = data.get('imagen') as File
+    let imagen_url: string | undefined
+    if (archivo && archivo.size > 0) {
+      imagen_url = (await subirImagen(archivo, 'actividades')) ?? undefined
+    }
+
     await supabase.from('actividades').update({
       fecha: data.get('fecha') as string,
       hora_inicio: data.get('hora_inicio') as string,
@@ -89,6 +129,7 @@ export default function AdminActividadesPage() {
       precio: data.get('es_gratuita') === 'false' ? parseFloat(data.get('precio') as string) : null,
       responsable: data.get('responsable') as string,
       contacto_inscripcion: data.get('contacto_inscripcion') as string,
+      ...(imagen_url ? { imagen_url } : {}),
       estado: 'aprobada',
     }).eq('id', id)
     setGuardando(false)
@@ -101,6 +142,8 @@ export default function AdminActividadesPage() {
 
   return (
     <div>
+      <input ref={inputImagenRef} type="file" accept="image/*" className="hidden" onChange={handleImagenExistente} />
+
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-[#212121]">Actividades</h1>
         <button onClick={() => setMostrarForm(!mostrarForm)} className="bg-[#43A047] text-white font-semibold px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-[#388E3C] text-sm">
@@ -133,6 +176,10 @@ export default function AdminActividadesPage() {
           <div className="grid grid-cols-2 gap-4">
             <input name="responsable" required placeholder="Responsable *" className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
             <input name="contacto_inscripcion" required placeholder="Contacto inscripción *" className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-[#616161] block mb-1">Foto (opcional)</label>
+            <input name="imagen" type="file" accept="image/*" className="w-full text-sm" />
           </div>
           <div className="flex gap-3">
             <button type="submit" disabled={guardando} className="bg-[#43A047] text-white font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-[#388E3C] disabled:opacity-60">
@@ -202,6 +249,10 @@ export default function AdminActividadesPage() {
                       <input name="responsable" required placeholder="Responsable *" defaultValue={a.nombre_propone ?? ''} className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
                       <input name="contacto_inscripcion" required placeholder="Contacto inscripción *" defaultValue={a.contacto_propone ?? ''} className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
                     </div>
+                    <div>
+                      <label className="text-xs font-medium text-[#616161] block mb-1">Foto (opcional)</label>
+                      <input name="imagen" type="file" accept="image/*" className="w-full text-sm" />
+                    </div>
                     <div className="flex gap-3">
                       <button type="submit" disabled={guardando} className="bg-[#43A047] text-white font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-[#388E3C] disabled:opacity-60">
                         {guardando ? 'Publicando...' : 'Publicar actividad'}
@@ -249,7 +300,17 @@ export default function AdminActividadesPage() {
                     </span>
                   </td>
                   <td className="px-5 py-4 text-right">
-                    <button onClick={() => eliminar(a.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"><Trash2 size={16} /></button>
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => abrirSelectorImagen(a.id)}
+                        disabled={subiendoId === a.id}
+                        className="p-1.5 rounded-lg hover:bg-[#E3F2FD] text-[#1E88E5] disabled:opacity-50"
+                        title={a.imagen_url ? 'Cambiar foto' : 'Subir foto'}
+                      >
+                        <ImagePlus size={16} />
+                      </button>
+                      <button onClick={() => eliminar(a.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"><Trash2 size={16} /></button>
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS actividades (
   precio DECIMAL(10,2),
   responsable TEXT,
   contacto_inscripcion TEXT,
+  imagen_url TEXT,
   origen TEXT NOT NULL DEFAULT 'vecinal' CHECK (origen IN ('vecinal', 'vecino')),
   estado TEXT NOT NULL DEFAULT 'aprobada' CHECK (estado IN ('pendiente', 'aprobada', 'rechazada')),
   nombre_propone TEXT,

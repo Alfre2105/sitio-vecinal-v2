@@ -11,6 +11,7 @@ interface Props {
   precio: number | null
   responsable: string
   contacto_inscripcion: string
+  imagen_url?: string | null
 }
 
 export default function ActividadCard({
@@ -24,6 +25,7 @@ export default function ActividadCard({
   precio,
   responsable,
   contacto_inscripcion,
+  imagen_url,
 }: Props) {
   const fechaFormateada = new Date(fecha + 'T00:00:00').toLocaleDateString('es-AR', {
     weekday: 'long',
@@ -32,7 +34,13 @@ export default function ActividadCard({
   })
 
   return (
-    <article className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow p-5 border-l-4 border-[#43A047]">
+    <article className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden border-l-4 border-[#43A047]">
+      {imagen_url && (
+        <div className="w-full h-40 bg-gray-100">
+          <img src={imagen_url} alt={titulo} className="w-full h-full object-cover" />
+        </div>
+      )}
+      <div className="p-5">
       <div className="flex items-start justify-between gap-2 mb-2">
         <h3 className="font-bold text-[#212121] text-base">{titulo}</h3>
         <span className={`shrink-0 text-xs font-semibold px-2 py-1 rounded-full ${es_gratuita ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
@@ -59,6 +67,7 @@ export default function ActividadCard({
             <span>Inscripción: {contacto_inscripcion}</span>
           </div>
         )}
+      </div>
       </div>
     </article>
   )

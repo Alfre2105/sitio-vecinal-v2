@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { subirImagen } from '@/lib/subirImagen'
 import { Plus, Eye, EyeOff, Trash2, Edit, ImagePlus } from 'lucide-react'
 
 type Noticia = {
@@ -11,19 +12,6 @@ type Noticia = {
   fecha: string
   publicada: boolean
   imagen_url: string | null
-}
-
-async function subirImagen(file: File): Promise<string | null> {
-  const formData = new FormData()
-  formData.append('file', file)
-  const res = await fetch('/api/upload-imagen', {
-    method: 'POST',
-    headers: { 'x-admin-password': process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? '' },
-    body: formData,
-  })
-  if (!res.ok) return null
-  const data = await res.json()
-  return data.url as string
 }
 
 export default function AdminNoticiasPage() {
@@ -61,7 +49,7 @@ export default function AdminNoticiasPage() {
     if (!file || !id) return
 
     setSubiendoId(id)
-    const url = await subirImagen(file)
+    const url = await subirImagen(file, 'noticias')
     if (url) {
       await supabase.from('noticias').update({ imagen_url: url }).eq('id', id)
       setNoticias(prev => prev.map(n => n.id === id ? { ...n, imagen_url: url } : n))
@@ -89,7 +77,7 @@ export default function AdminNoticiasPage() {
     const archivo = data.get('imagen') as File
     let imagen_url: string | null = null
     if (archivo && archivo.size > 0) {
-      imagen_url = await subirImagen(archivo)
+      imagen_url = await subirImagen(archivo, 'noticias')
     }
 
     await supabase.from('noticias').insert({
