@@ -45,8 +45,8 @@ const accesosRapidos = [
   {
     href: '/#contacto',
     icono: MessageSquare,
-    titulo: 'Quejas y consultas',
-    desc: 'Envianos tu mensaje o reclamo',
+    titulo: 'Consultas y sugerencias',
+    desc: 'Envianos tu mensaje o solicitud',
     color: 'bg-orange-50 text-orange-600 border-orange-100',
   },
   {
@@ -179,7 +179,7 @@ export default async function Home() {
       <section id="contacto" className="bg-white py-12 px-4">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-[#212121] mb-2">Contacto y quejas</h2>
+            <h2 className="text-2xl font-bold text-[#212121] mb-2">Contacto y sugerencias</h2>
             <p className="text-[#616161]">
               ¿Tenés una consulta, reclamo o sugerencia? Escribinos y te respondemos a la brevedad.
             </p>
