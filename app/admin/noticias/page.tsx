@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Plus, Eye, EyeOff, Trash2, Edit } from 'lucide-react'
+import { Plus, Eye, EyeOff, Trash2, Edit, ImagePlus } from 'lucide-react'
 
 type Noticia = {
   id: string
@@ -10,6 +10,20 @@ type Noticia = {
   categoria: string
   fecha: string
   publicada: boolean
+  imagen_url: string | null
+}
+
+async function subirImagen(file: File): Promise<string | null> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const res = await fetch('/api/upload-imagen', {
+    method: 'POST',
+    headers: { 'x-admin-password': process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? '' },
+    body: formData,
+  })
+  if (!res.ok) return null
+  const data = await res.json()
+  return data.url as string
 }
 
 export default function AdminNoticiasPage() {
@@ -17,6 +31,9 @@ export default function AdminNoticiasPage() {
   const [cargando, setCargando] = useState(true)
   const [mostrarForm, setMostrarForm] = useState(false)
   const [guardando, setGuardando] = useState(false)
+  const [subiendoId, setSubiendoId] = useState<string | null>(null)
+  const inputImagenRef = useRef<HTMLInputElement>(null)
+  const idParaImagen = useRef<string | null>(null)
 
   useEffect(() => {
     cargar()
@@ -26,10 +43,30 @@ export default function AdminNoticiasPage() {
     setCargando(true)
     const { data } = await supabase
       .from('noticias')
-      .select('id, titulo, categoria, fecha, publicada')
+      .select('id, titulo, categoria, fecha, publicada, imagen_url')
       .order('fecha', { ascending: false })
     setNoticias(data ?? [])
     setCargando(false)
+  }
+
+  function abrirSelectorImagen(id: string) {
+    idParaImagen.current = id
+    inputImagenRef.current?.click()
+  }
+
+  async function handleImagenExistente(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    const id = idParaImagen.current
+    e.target.value = ''
+    if (!file || !id) return
+
+    setSubiendoId(id)
+    const url = await subirImagen(file)
+    if (url) {
+      await supabase.from('noticias').update({ imagen_url: url }).eq('id', id)
+      setNoticias(prev => prev.map(n => n.id === id ? { ...n, imagen_url: url } : n))
+    }
+    setSubiendoId(null)
   }
 
   async function togglePublicada(id: string, actual: boolean) {
@@ -49,12 +86,19 @@ export default function AdminNoticiasPage() {
     const form = e.currentTarget
     const data = new FormData(form)
 
+    const archivo = data.get('imagen') as File
+    let imagen_url: string | null = null
+    if (archivo && archivo.size > 0) {
+      imagen_url = await subirImagen(archivo)
+    }
+
     await supabase.from('noticias').insert({
       titulo: data.get('titulo') as string,
       resumen: data.get('resumen') as string,
       contenido: data.get('contenido') as string,
       categoria: data.get('categoria') as string,
       fecha: data.get('fecha') as string,
+      imagen_url,
       publicada: false,
     })
 
@@ -66,6 +110,8 @@ export default function AdminNoticiasPage() {
 
   return (
     <div>
+      <input ref={inputImagenRef} type="file" accept="image/*" className="hidden" onChange={handleImagenExistente} />
+
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-[#212121]">Noticias</h1>
         <button
@@ -92,6 +138,10 @@ export default function AdminNoticiasPage() {
               ))}
             </select>
             <input name="fecha" type="date" required className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#1E88E5]" defaultValue={new Date().toISOString().split('T')[0]} />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-[#616161] block mb-1">Foto (opcional)</label>
+            <input name="imagen" type="file" accept="image/*" className="w-full text-sm" />
           </div>
           <div className="flex gap-3">
             <button type="submit" disabled={guardando} className="bg-[#1E88E5] text-white font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-[#1565C0] disabled:opacity-60">
@@ -136,6 +186,14 @@ export default function AdminNoticiasPage() {
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => abrirSelectorImagen(n.id)}
+                        disabled={subiendoId === n.id}
+                        className="p-1.5 rounded-lg hover:bg-[#E3F2FD] text-[#1E88E5] disabled:opacity-50"
+                        title={n.imagen_url ? 'Cambiar foto' : 'Subir foto'}
+                      >
+                        <ImagePlus size={16} />
+                      </button>
                       <button onClick={() => togglePublicada(n.id, n.publicada)} className="p-1.5 rounded-lg hover:bg-[#E3F2FD] text-[#1E88E5]" title={n.publicada ? 'Despublicar' : 'Publicar'}>
                         {n.publicada ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
