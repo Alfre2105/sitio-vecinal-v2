@@ -19,18 +19,25 @@ CREATE TABLE IF NOT EXISTS noticias (
 );
 
 -- ACTIVIDADES
+-- fecha/hora_inicio/hora_fin/lugar/responsable/contacto_inscripcion son NULL
+-- mientras la actividad esta "pendiente" (propuesta de un vecino todavia sin
+-- revisar) porque esos datos se completan cuando la Vecinal la aprueba.
 CREATE TABLE IF NOT EXISTS actividades (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   titulo TEXT NOT NULL,
   descripcion TEXT NOT NULL,
-  fecha DATE NOT NULL,
-  hora_inicio TIME NOT NULL,
-  hora_fin TIME NOT NULL,
-  lugar TEXT NOT NULL,
+  fecha DATE,
+  hora_inicio TIME,
+  hora_fin TIME,
+  lugar TEXT,
   es_gratuita BOOLEAN NOT NULL DEFAULT true,
   precio DECIMAL(10,2),
-  responsable TEXT NOT NULL,
-  contacto_inscripcion TEXT NOT NULL,
+  responsable TEXT,
+  contacto_inscripcion TEXT,
+  origen TEXT NOT NULL DEFAULT 'vecinal' CHECK (origen IN ('vecinal', 'vecino')),
+  estado TEXT NOT NULL DEFAULT 'aprobada' CHECK (estado IN ('pendiente', 'aprobada', 'rechazada')),
+  nombre_propone TEXT,
+  contacto_propone TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -177,7 +184,14 @@ CREATE POLICY "Lectura de noticias" ON noticias FOR SELECT USING (true);
 CREATE POLICY "Insertar noticias" ON noticias FOR INSERT WITH CHECK (true);
 CREATE POLICY "Actualizar noticias" ON noticias FOR UPDATE USING (true);
 CREATE POLICY "Eliminar noticias" ON noticias FOR DELETE USING (true);
-CREATE POLICY "Actividades son públicas" ON actividades FOR SELECT USING (true);
+-- Nota: el filtro estado='aprobada' para el publico se aplica en la query de
+-- la app (app/page.tsx, app/actividades/page.tsx), no en RLS, porque el panel
+-- /admin/actividades necesita ver y moderar las propuestas pendientes/rechazadas,
+-- y el formulario publico de propuestas necesita poder insertar (estado='pendiente').
+CREATE POLICY "Lectura de actividades" ON actividades FOR SELECT USING (true);
+CREATE POLICY "Insertar actividades" ON actividades FOR INSERT WITH CHECK (true);
+CREATE POLICY "Actualizar actividades" ON actividades FOR UPDATE USING (true);
+CREATE POLICY "Eliminar actividades" ON actividades FOR DELETE USING (true);
 CREATE POLICY "Comisión es pública" ON comision_directiva FOR SELECT USING (activo = true);
 CREATE POLICY "Comercios activos son públicos" ON comercios FOR SELECT USING (activo = true);
 CREATE POLICY "Historial es público" ON historial_barrio FOR SELECT USING (true);

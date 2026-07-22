@@ -21,6 +21,7 @@ async function getActividades() {
   const { data } = await supabase
     .from('actividades')
     .select('*')
+    .eq('estado', 'aprobada')
     .gte('fecha', hoy)
     .order('fecha', { ascending: true })
     .limit(4)

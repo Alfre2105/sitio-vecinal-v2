@@ -1,13 +1,14 @@
 export const dynamic = 'force-dynamic'
 import { supabase } from '@/lib/supabase'
 import ActividadCard from '@/components/ActividadCard'
-import { Lightbulb } from 'lucide-react'
+import FormularioPropuestaActividad from '@/components/FormularioPropuestaActividad'
 
 async function getActividades() {
   const hoy = new Date().toISOString().split('T')[0]
   const { data } = await supabase
     .from('actividades')
     .select('*')
+    .eq('estado', 'aprobada')
     .gte('fecha', hoy)
     .order('fecha', { ascending: true })
   return data ?? []
@@ -202,19 +203,7 @@ export default async function ActividadesPage() {
       </section>
 
       {/* Formulario de propuesta */}
-      <div className="bg-gradient-to-br from-[#E8F5E9] to-[#E3F2FD] rounded-2xl p-8 text-center">
-        <Lightbulb size={40} className="text-[#43A047] mx-auto mb-4" />
-        <h2 className="text-xl font-bold text-[#212121] mb-2">¿Tenés una idea para el barrio?</h2>
-        <p className="text-[#616161] mb-5 max-w-md mx-auto">
-          Proponé una nueva actividad, taller o evento para la comunidad. Todas las ideas son bienvenidas.
-        </p>
-        <a
-          href="mailto:vecinal.mosconi@gmail.com?subject=Propuesta%20de%20actividad"
-          className="inline-flex items-center gap-2 bg-[#43A047] text-white font-bold px-6 py-3 rounded-xl hover:bg-[#388E3C] transition-colors"
-        >
-          Proponer una actividad
-        </a>
-      </div>
+      <FormularioPropuestaActividad />
     </div>
   )
 }
