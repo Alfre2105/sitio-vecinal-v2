@@ -16,7 +16,8 @@ type Socio = {
   categoria: string
   activo: boolean
   fecha_ingreso: string
-  dni_foto_url: string | null
+  dni_foto_frente_url: string | null
+  dni_foto_dorso_url: string | null
   comprobante_domicilio_url: string | null
 }
 
@@ -116,9 +117,14 @@ export default function AdminSociosPage() {
                   </div>
                 </div>
                 <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100">
-                  {s.dni_foto_url && (
-                    <button onClick={() => verDocumento(s.dni_foto_url!)} className="flex items-center gap-1.5 text-xs font-semibold text-[#1E88E5] border border-[#1E88E5] px-3 py-1.5 rounded-lg hover:bg-[#E3F2FD]">
-                      <FileText size={14} /> Ver DNI
+                  {s.dni_foto_frente_url && (
+                    <button onClick={() => verDocumento(s.dni_foto_frente_url!)} className="flex items-center gap-1.5 text-xs font-semibold text-[#1E88E5] border border-[#1E88E5] px-3 py-1.5 rounded-lg hover:bg-[#E3F2FD]">
+                      <FileText size={14} /> Ver DNI (frente)
+                    </button>
+                  )}
+                  {s.dni_foto_dorso_url && (
+                    <button onClick={() => verDocumento(s.dni_foto_dorso_url!)} className="flex items-center gap-1.5 text-xs font-semibold text-[#1E88E5] border border-[#1E88E5] px-3 py-1.5 rounded-lg hover:bg-[#E3F2FD]">
+                      <FileText size={14} /> Ver DNI (dorso)
                     </button>
                   )}
                   {s.comprobante_domicilio_url && (

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { CheckCircle, UserPlus } from 'lucide-react'
+import { CheckCircle, UserPlus, Upload, FileCheck } from 'lucide-react'
 
 async function subirDocumento(file: File): Promise<string | null> {
   const formData = new FormData()
@@ -10,6 +10,45 @@ async function subirDocumento(file: File): Promise<string | null> {
   if (!res.ok) return null
   const data = await res.json()
   return data.path as string
+}
+
+function CampoArchivo({
+  name,
+  etiqueta,
+  requerido,
+}: {
+  name: string
+  etiqueta: string
+  requerido?: boolean
+}) {
+  const [nombreArchivo, setNombreArchivo] = useState('')
+  const id = `campo-${name}`
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-[#212121] mb-1">
+        {etiqueta} {requerido && '*'}
+      </label>
+      <label
+        htmlFor={id}
+        className="flex items-center gap-2 border-2 border-dashed border-[#43A047]/50 rounded-lg px-4 py-3 text-sm cursor-pointer hover:bg-[#E8F5E9] transition-colors"
+      >
+        {nombreArchivo ? <FileCheck size={18} className="text-[#43A047] shrink-0" /> : <Upload size={18} className="text-[#43A047] shrink-0" />}
+        <span className={nombreArchivo ? 'text-[#212121] truncate' : 'text-[#616161]'}>
+          {nombreArchivo || 'Elegir archivo...'}
+        </span>
+      </label>
+      <input
+        id={id}
+        name={name}
+        type="file"
+        accept="image/*"
+        required={requerido}
+        className="sr-only"
+        onChange={e => setNombreArchivo(e.target.files?.[0]?.name ?? '')}
+      />
+    </div>
+  )
 }
 
 export default function FormularioAdhesion() {
@@ -25,9 +64,13 @@ export default function FormularioAdhesion() {
     const form = e.currentTarget
     const data = new FormData(form)
 
-    const dniFoto = data.get('dni_foto') as File
-    const dni_foto_url = await subirDocumento(dniFoto)
-    if (!dni_foto_url) {
+    const dniFrente = data.get('dni_foto_frente') as File
+    const dniDorso = data.get('dni_foto_dorso') as File
+    const [dni_foto_frente_url, dni_foto_dorso_url] = await Promise.all([
+      subirDocumento(dniFrente),
+      subirDocumento(dniDorso),
+    ])
+    if (!dni_foto_frente_url || !dni_foto_dorso_url) {
       setError(true)
       setCargando(false)
       return
@@ -47,7 +90,8 @@ export default function FormularioAdhesion() {
       domicilio: data.get('domicilio'),
       telefono: data.get('telefono'),
       email: data.get('email'),
-      dni_foto_url,
+      dni_foto_frente_url,
+      dni_foto_dorso_url,
       comprobante_domicilio_url,
     }
 
@@ -75,6 +119,8 @@ export default function FormularioAdhesion() {
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm p-6 space-y-4 border-2 border-[#E8F5E9]">
+      <p className="text-xs text-[#9E9E9E]">Los campos marcados con * son obligatorios.</p>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-[#212121] mb-1">Nombre *</label>
@@ -113,18 +159,17 @@ export default function FormularioAdhesion() {
         </div>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-[#212121] mb-1">Foto del DNI *</label>
-        <input name="dni_foto" type="file" accept="image/*" required className="w-full text-sm" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <CampoArchivo name="dni_foto_frente" etiqueta="Foto del DNI - Frente" requerido />
+        <CampoArchivo name="dni_foto_dorso" etiqueta="Foto del DNI - Dorso" requerido />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[#212121] mb-1">Comprobante de domicilio (opcional)</label>
-        <input name="comprobante_domicilio" type="file" accept="image/*" className="w-full text-sm" />
+        <CampoArchivo name="comprobante_domicilio" etiqueta="Comprobante de domicilio (opcional)" />
         <p className="text-xs text-[#9E9E9E] mt-1">Ej: factura de luz, gas o agua a tu nombre. No es obligatorio para asociarte.</p>
       </div>
 
-      {error && <p className="text-red-600 text-sm text-center">Hubo un problema al subir el DNI. Probá de nuevo.</p>}
+      {error && <p className="text-red-600 text-sm text-center">Hubo un problema al subir las fotos del DNI. Probá de nuevo.</p>}
 
       <button
         type="submit"

@@ -58,9 +58,10 @@ CREATE TABLE IF NOT EXISTS reservas_salon (
 );
 
 -- SOCIOS
--- dni_foto_url y comprobante_domicilio_url guardan la RUTA dentro del bucket
--- privado "socios-documentos" (no una URL pública) — se resuelven a un link
--- firmado y temporal solo desde el panel admin, via /api/documento-socio.
+-- dni_foto_frente_url, dni_foto_dorso_url y comprobante_domicilio_url guardan
+-- la RUTA dentro del bucket privado "socios-documentos" (no una URL pública)
+-- — se resuelven a un link firmado y temporal solo desde el panel admin,
+-- via /api/documento-socio.
 CREATE TABLE IF NOT EXISTS socios (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   dni TEXT NOT NULL UNIQUE,
@@ -71,7 +72,8 @@ CREATE TABLE IF NOT EXISTS socios (
   telefono TEXT,
   direccion TEXT,
   fecha_nacimiento DATE,
-  dni_foto_url TEXT,
+  dni_foto_frente_url TEXT,
+  dni_foto_dorso_url TEXT,
   comprobante_domicilio_url TEXT,
   fecha_ingreso DATE NOT NULL DEFAULT CURRENT_DATE,
   categoria TEXT NOT NULL DEFAULT 'activo' CHECK (categoria IN ('activo', 'cadete', 'vitalicio', 'honorario', 'adherente')),
