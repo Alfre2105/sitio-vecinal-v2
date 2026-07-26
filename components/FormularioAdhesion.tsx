@@ -3,16 +3,41 @@
 import { useState } from 'react'
 import { CheckCircle, UserPlus } from 'lucide-react'
 
+async function subirDocumento(file: File): Promise<string | null> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const res = await fetch('/api/upload-documento-socio', { method: 'POST', body: formData })
+  if (!res.ok) return null
+  const data = await res.json()
+  return data.path as string
+}
+
 export default function FormularioAdhesion() {
   const [enviado, setEnviado] = useState(false)
   const [cargando, setCargando] = useState(false)
+  const [error, setError] = useState(false)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setCargando(true)
+    setError(false)
 
     const form = e.currentTarget
     const data = new FormData(form)
+
+    const dniFoto = data.get('dni_foto') as File
+    const dni_foto_url = await subirDocumento(dniFoto)
+    if (!dni_foto_url) {
+      setError(true)
+      setCargando(false)
+      return
+    }
+
+    const comprobante = data.get('comprobante_domicilio') as File
+    let comprobante_domicilio_url: string | null = null
+    if (comprobante && comprobante.size > 0) {
+      comprobante_domicilio_url = await subirDocumento(comprobante)
+    }
 
     const body = {
       nombre: data.get('nombre'),
@@ -22,6 +47,8 @@ export default function FormularioAdhesion() {
       domicilio: data.get('domicilio'),
       telefono: data.get('telefono'),
       email: data.get('email'),
+      dni_foto_url,
+      comprobante_domicilio_url,
     }
 
     await fetch('/api/adhesion', {
@@ -85,6 +112,19 @@ export default function FormularioAdhesion() {
           <input name="email" type="email" className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#43A047]" placeholder="tu@email.com" />
         </div>
       </div>
+
+      <div>
+        <label className="block text-sm font-medium text-[#212121] mb-1">Foto del DNI *</label>
+        <input name="dni_foto" type="file" accept="image/*" required className="w-full text-sm" />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-[#212121] mb-1">Comprobante de domicilio (opcional)</label>
+        <input name="comprobante_domicilio" type="file" accept="image/*" className="w-full text-sm" />
+        <p className="text-xs text-[#9E9E9E] mt-1">Ej: factura de luz, gas o agua a tu nombre. No es obligatorio para asociarte.</p>
+      </div>
+
+      {error && <p className="text-red-600 text-sm text-center">Hubo un problema al subir el DNI. Probá de nuevo.</p>}
 
       <button
         type="submit"

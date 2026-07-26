@@ -58,6 +58,9 @@ CREATE TABLE IF NOT EXISTS reservas_salon (
 );
 
 -- SOCIOS
+-- dni_foto_url y comprobante_domicilio_url guardan la RUTA dentro del bucket
+-- privado "socios-documentos" (no una URL pública) — se resuelven a un link
+-- firmado y temporal solo desde el panel admin, via /api/documento-socio.
 CREATE TABLE IF NOT EXISTS socios (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   dni TEXT NOT NULL UNIQUE,
@@ -67,6 +70,9 @@ CREATE TABLE IF NOT EXISTS socios (
   email TEXT UNIQUE,
   telefono TEXT,
   direccion TEXT,
+  fecha_nacimiento DATE,
+  dni_foto_url TEXT,
+  comprobante_domicilio_url TEXT,
   fecha_ingreso DATE NOT NULL DEFAULT CURRENT_DATE,
   categoria TEXT NOT NULL DEFAULT 'activo' CHECK (categoria IN ('activo', 'cadete', 'vitalicio', 'honorario', 'adherente')),
   activo BOOLEAN NOT NULL DEFAULT true,
@@ -209,3 +215,8 @@ CREATE POLICY "Actualizar reservas" ON reservas_salon FOR UPDATE USING (true);
 -- Socios pueden ver sus propios datos (requiere auth configurada)
 CREATE POLICY "Socios ven sus datos" ON socios FOR SELECT USING (true);
 CREATE POLICY "Socios ven sus cuotas" ON cuotas FOR SELECT USING (true);
+-- Insertar (adhesion publica via /api/adhesion con service role), y
+-- actualizar/eliminar (aprobar/rechazar solicitudes) desde /admin/socios
+CREATE POLICY "Insertar socios" ON socios FOR INSERT WITH CHECK (true);
+CREATE POLICY "Actualizar socios" ON socios FOR UPDATE USING (true);
+CREATE POLICY "Eliminar socios" ON socios FOR DELETE USING (true);
