@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Search, Users, Check, X, FileText, Plus, Trash2 } from 'lucide-react'
+import { Search, Users, Check, X, FileText, Plus, Trash2, Wallet } from 'lucide-react'
+import GestionCuotasModal from '@/components/GestionCuotasModal'
 
 type Socio = {
   id: string
@@ -38,6 +39,8 @@ export default function AdminSociosPage() {
   const [mostrarForm, setMostrarForm] = useState(false)
   const [guardando, setGuardando] = useState(false)
   const [errorForm, setErrorForm] = useState('')
+  const [cuotasSocio, setCuotasSocio] = useState<Socio | null>(null)
+  const [resumenCuotas, setResumenCuotas] = useState<Record<string, { pagadas: number; pendientes: number }>>({})
 
   useEffect(() => {
     cargar()
@@ -50,7 +53,21 @@ export default function AdminSociosPage() {
       .select('*')
       .order('apellido', { ascending: true })
     setSocios((data as Socio[]) ?? [])
+    await cargarResumenCuotas()
     setCargando(false)
+  }
+
+  async function cargarResumenCuotas() {
+    const anioActual = new Date().getFullYear()
+    const { data } = await supabase.from('cuotas').select('socio_id, pagada').eq('anio', anioActual)
+    const resumen: Record<string, { pagadas: number; pendientes: number }> = {}
+    for (const c of (data as { socio_id: string; pagada: boolean }[]) ?? []) {
+      const r = resumen[c.socio_id] ?? { pagadas: 0, pendientes: 0 }
+      if (c.pagada) r.pagadas++
+      else r.pendientes++
+      resumen[c.socio_id] = r
+    }
+    setResumenCuotas(resumen)
   }
 
   async function aprobar(id: string) {
@@ -272,6 +289,7 @@ export default function AdminSociosPage() {
                   <th className="text-left px-5 py-3 font-semibold text-[#616161] hidden md:table-cell">DNI</th>
                   <th className="text-left px-5 py-3 font-semibold text-[#616161] hidden lg:table-cell">Contacto</th>
                   <th className="text-center px-5 py-3 font-semibold text-[#616161]">Categoría</th>
+                  <th className="text-center px-5 py-3 font-semibold text-[#616161]">Cuotas {new Date().getFullYear()}</th>
                   <th className="px-5 py-3" />
                 </tr>
               </thead>
@@ -293,8 +311,19 @@ export default function AdminSociosPage() {
                         {s.categoria}
                       </span>
                     </td>
+                    <td className="px-5 py-4 text-center">
+                      {(() => {
+                        const r = resumenCuotas[s.id]
+                        if (!r) return <span className="text-xs text-[#9E9E9E]">Sin cargar</span>
+                        if (r.pendientes === 0) return <span className="text-xs font-semibold text-green-600">Al día</span>
+                        return <span className="text-xs font-semibold text-red-600">Debe {r.pendientes}</span>
+                      })()}
+                    </td>
                     <td className="px-5 py-4 text-right">
-                      <button onClick={() => eliminar(s.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"><Trash2 size={16} /></button>
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => setCuotasSocio(s)} className="p-1.5 rounded-lg hover:bg-blue-50 text-[#1E88E5]" title="Gestionar cuotas"><Wallet size={16} /></button>
+                        <button onClick={() => eliminar(s.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"><Trash2 size={16} /></button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -303,6 +332,15 @@ export default function AdminSociosPage() {
           </div>
         )}
       </div>
+
+      {cuotasSocio && (
+        <GestionCuotasModal
+          socioId={cuotasSocio.id}
+          socioNombre={`${cuotasSocio.nombre} ${cuotasSocio.apellido}`}
+          onClose={() => setCuotasSocio(null)}
+          onCambio={cargarResumenCuotas}
+        />
+      )}
     </div>
   )
 }

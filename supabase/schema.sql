@@ -222,3 +222,8 @@ CREATE POLICY "Socios ven sus cuotas" ON cuotas FOR SELECT USING (true);
 CREATE POLICY "Insertar socios" ON socios FOR INSERT WITH CHECK (true);
 CREATE POLICY "Actualizar socios" ON socios FOR UPDATE USING (true);
 CREATE POLICY "Eliminar socios" ON socios FOR DELETE USING (true);
+-- Carga y edicion de cuotas (generar meses, marcar pagada/no pagada, ajustar
+-- monto) desde /admin/socios, mismo patron de RLS abierto que el resto del
+-- panel admin (el gate real es la contraseña client-side de AdminGuard)
+CREATE POLICY "Insertar cuotas" ON cuotas FOR INSERT WITH CHECK (true);
+CREATE POLICY "Actualizar cuotas" ON cuotas FOR UPDATE USING (true);

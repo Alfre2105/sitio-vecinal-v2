@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { LogIn, CheckCircle, XCircle, CreditCard, User, Phone, MapPin } from 'lucide-react'
 
@@ -35,6 +35,23 @@ export default function LoginSocio() {
   const [error, setError] = useState('')
   const [socio, setSocio] = useState<SocioData | null>(null)
   const [cuotas, setCuotas] = useState<CuotaData[]>([])
+  const [anio, setAnio] = useState(new Date().getFullYear())
+
+  async function cargarCuotas(socioId: string, anioConsulta: number) {
+    const { data: cuotasData } = await supabase
+      .from('cuotas')
+      .select('*')
+      .eq('socio_id', socioId)
+      .eq('anio', anioConsulta)
+      .order('mes', { ascending: true })
+
+    setCuotas((cuotasData as CuotaData[]) ?? [])
+  }
+
+  useEffect(() => {
+    if (socio) cargarCuotas(socio.id, anio)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anio])
 
   async function handleBuscar(e: React.FormEvent) {
     e.preventDefault()
@@ -59,20 +76,15 @@ export default function LoginSocio() {
     setSocio(socioData)
 
     const anioActual = new Date().getFullYear()
-    const { data: cuotasData } = await supabase
-      .from('cuotas')
-      .select('*')
-      .eq('socio_id', socioData.id)
-      .eq('anio', anioActual)
-      .order('mes', { ascending: true })
-
-    setCuotas((cuotasData as CuotaData[]) ?? [])
+    setAnio(anioActual)
+    await cargarCuotas(socioData.id, anioActual)
     setBuscando(false)
   }
 
   if (socio) {
     const pagadas = cuotas.filter(c => c.pagada).length
     const pendientes = cuotas.filter(c => !c.pagada).length
+    const deuda = cuotas.filter(c => !c.pagada).reduce((acc, c) => acc + Number(c.monto), 0)
 
     return (
       <div className="space-y-5">
@@ -116,13 +128,21 @@ export default function LoginSocio() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-[#212121]">Cuotas {new Date().getFullYear()}</h3>
-            <div className="flex gap-3 text-xs">
+          <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <button onClick={() => setAnio(a => a - 1)} className="px-2.5 py-1 border border-[#E0E0E0] rounded-lg text-sm hover:bg-gray-50">←</button>
+              <h3 className="font-bold text-[#212121]">Cuotas {anio}</h3>
+              <button onClick={() => setAnio(a => a + 1)} className="px-2.5 py-1 border border-[#E0E0E0] rounded-lg text-sm hover:bg-gray-50">→</button>
+            </div>
+            <div className="flex gap-3 text-xs items-center">
               <span className="text-green-600 font-medium">{pagadas} pagadas</span>
               <span className="text-red-500 font-medium">{pendientes} pendientes</span>
             </div>
           </div>
+
+          {deuda > 0 && (
+            <p className="text-red-600 font-bold text-sm mb-3">Deuda pendiente: ${deuda.toLocaleString('es-AR')}</p>
+          )}
 
           {cuotas.length === 0 ? (
             <p className="text-[#9E9E9E] text-sm text-center py-4">No hay cuotas registradas para este año.</p>
