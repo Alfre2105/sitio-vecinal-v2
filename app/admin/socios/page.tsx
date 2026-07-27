@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Search, Users, Check, X, FileText, Plus, Trash2, Wallet } from 'lucide-react'
+import { Search, Users, Check, X, FileText, Plus, Trash2, Wallet, Pencil } from 'lucide-react'
 import GestionCuotasModal from '@/components/GestionCuotasModal'
 
 type Socio = {
@@ -14,6 +14,7 @@ type Socio = {
   email: string | null
   telefono: string | null
   direccion: string | null
+  fecha_nacimiento: string | null
   categoria: string
   activo: boolean
   fecha_ingreso: string
@@ -37,6 +38,7 @@ export default function AdminSociosPage() {
   const [cargando, setCargando] = useState(true)
   const [busqueda, setBusqueda] = useState('')
   const [mostrarForm, setMostrarForm] = useState(false)
+  const [editando, setEditando] = useState<Socio | null>(null)
   const [guardando, setGuardando] = useState(false)
   const [errorForm, setErrorForm] = useState('')
   const [cuotasSocio, setCuotasSocio] = useState<Socio | null>(null)
@@ -87,14 +89,27 @@ export default function AdminSociosPage() {
     cargar()
   }
 
-  async function handleCrear(e: React.FormEvent<HTMLFormElement>) {
+  function abrirNuevo() {
+    setEditando(null)
+    setErrorForm('')
+    setMostrarForm(true)
+  }
+
+  function abrirEditar(s: Socio) {
+    setEditando(s)
+    setErrorForm('')
+    setMostrarForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  async function handleGuardar(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setGuardando(true)
     setErrorForm('')
     const form = e.currentTarget
     const data = new FormData(form)
 
-    const { error } = await supabase.from('socios').insert({
+    const datos = {
       nombre: data.get('nombre') as string,
       apellido: data.get('apellido') as string,
       dni: data.get('dni') as string,
@@ -106,7 +121,11 @@ export default function AdminSociosPage() {
       fecha_ingreso: data.get('fecha_ingreso') as string,
       categoria: data.get('categoria') as string,
       activo: data.get('activo') === 'true',
-    })
+    }
+
+    const { error } = editando
+      ? await supabase.from('socios').update(datos).eq('id', editando.id)
+      : await supabase.from('socios').insert(datos)
 
     if (error) {
       setErrorForm(error.code === '23505' ? 'Ya existe un socio con ese DNI, número de socio o email.' : 'Error al guardar.')
@@ -116,6 +135,7 @@ export default function AdminSociosPage() {
 
     form.reset()
     setMostrarForm(false)
+    setEditando(null)
     setGuardando(false)
     cargar()
   }
@@ -146,42 +166,44 @@ export default function AdminSociosPage() {
           <h1 className="text-2xl font-bold text-[#212121]">Socios</h1>
           <p className="text-sm text-[#9E9E9E] mt-0.5">{socios.filter(s => s.activo).length} socios activos</p>
         </div>
-        <button onClick={() => setMostrarForm(!mostrarForm)} className="bg-[#1E88E5] text-white font-semibold px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-[#1565C0] text-sm">
+        <button onClick={() => { if (mostrarForm) { setMostrarForm(false) } else { abrirNuevo() } }} className="bg-[#1E88E5] text-white font-semibold px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-[#1565C0] text-sm">
           <Plus size={18} /> Nuevo socio
         </button>
       </div>
 
       {mostrarForm && (
-        <form onSubmit={handleCrear} className="bg-white rounded-2xl shadow-sm p-6 mb-6 space-y-4">
-          <h2 className="font-bold text-[#212121]">Nuevo socio</h2>
-          <p className="text-xs text-[#9E9E9E]">Para cargar socios ya existentes en el padrón de la Vecinal. No pide fotos de documentos — eso es solo para adhesiones nuevas por la web.</p>
+        <form key={editando?.id ?? 'nuevo'} onSubmit={handleGuardar} className="bg-white rounded-2xl shadow-sm p-6 mb-6 space-y-4">
+          <h2 className="font-bold text-[#212121]">{editando ? `Editar socio — ${editando.nombre} ${editando.apellido}` : 'Nuevo socio'}</h2>
+          {!editando && (
+            <p className="text-xs text-[#9E9E9E]">Para cargar socios ya existentes en el padrón de la Vecinal. No pide fotos de documentos — eso es solo para adhesiones nuevas por la web.</p>
+          )}
           <div className="grid grid-cols-2 gap-4">
-            <input name="nombre" required placeholder="Nombre *" className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
-            <input name="apellido" required placeholder="Apellido *" className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
+            <input name="nombre" required placeholder="Nombre *" defaultValue={editando?.nombre} className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
+            <input name="apellido" required placeholder="Apellido *" defaultValue={editando?.apellido} className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <input name="dni" required placeholder="DNI *" className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
-            <input name="numero_socio" required placeholder="Número de socio *" className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
+            <input name="dni" required placeholder="DNI *" defaultValue={editando?.dni} className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
+            <input name="numero_socio" required placeholder="Número de socio *" defaultValue={editando?.numero_socio} className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <input name="email" type="email" placeholder="Email" className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
-            <input name="telefono" placeholder="Teléfono" className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
+            <input name="email" type="email" placeholder="Email" defaultValue={editando?.email ?? ''} className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
+            <input name="telefono" placeholder="Teléfono" defaultValue={editando?.telefono ?? ''} className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
           </div>
-          <input name="direccion" placeholder="Domicilio" className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
+          <input name="direccion" placeholder="Domicilio" defaultValue={editando?.direccion ?? ''} className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-medium text-[#616161] block mb-1">Fecha de nacimiento</label>
-              <input name="fecha_nacimiento" type="date" className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
+              <input name="fecha_nacimiento" type="date" defaultValue={editando?.fecha_nacimiento ?? ''} className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
             </div>
             <div>
               <label className="text-xs font-medium text-[#616161] block mb-1">Fecha de ingreso *</label>
-              <input name="fecha_ingreso" type="date" required defaultValue={new Date().toISOString().split('T')[0]} className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
+              <input name="fecha_ingreso" type="date" required defaultValue={editando?.fecha_ingreso ?? new Date().toISOString().split('T')[0]} className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-medium text-[#616161] block mb-1">Categoría *</label>
-              <select name="categoria" required defaultValue="activo" className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm bg-white">
+              <select name="categoria" required defaultValue={editando?.categoria ?? 'activo'} className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm bg-white">
                 <option value="activo">Activo</option>
                 <option value="cadete">Cadete</option>
                 <option value="vitalicio">Vitalicio</option>
@@ -191,7 +213,7 @@ export default function AdminSociosPage() {
             </div>
             <div>
               <label className="text-xs font-medium text-[#616161] block mb-1">Estado *</label>
-              <select name="activo" required defaultValue="true" className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm bg-white">
+              <select name="activo" required defaultValue={editando ? String(editando.activo) : 'true'} className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm bg-white">
                 <option value="true">Activo</option>
                 <option value="false">Inactivo</option>
               </select>
@@ -202,7 +224,7 @@ export default function AdminSociosPage() {
             <button type="submit" disabled={guardando} className="bg-[#1E88E5] text-white font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-[#1565C0] disabled:opacity-60">
               {guardando ? 'Guardando...' : 'Guardar'}
             </button>
-            <button type="button" onClick={() => setMostrarForm(false)} className="border border-[#E0E0E0] text-[#616161] px-5 py-2.5 rounded-xl text-sm hover:bg-gray-50">
+            <button type="button" onClick={() => { setMostrarForm(false); setEditando(null) }} className="border border-[#E0E0E0] text-[#616161] px-5 py-2.5 rounded-xl text-sm hover:bg-gray-50">
               Cancelar
             </button>
           </div>
@@ -321,8 +343,9 @@ export default function AdminSociosPage() {
                     </td>
                     <td className="px-5 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => abrirEditar(s)} className="p-1.5 rounded-lg hover:bg-blue-50 text-[#1E88E5]" title="Editar socio"><Pencil size={16} /></button>
                         <button onClick={() => setCuotasSocio(s)} className="p-1.5 rounded-lg hover:bg-blue-50 text-[#1E88E5]" title="Gestionar cuotas"><Wallet size={16} /></button>
-                        <button onClick={() => eliminar(s.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"><Trash2 size={16} /></button>
+                        <button onClick={() => eliminar(s.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500" title="Eliminar socio"><Trash2 size={16} /></button>
                       </div>
                     </td>
                   </tr>
