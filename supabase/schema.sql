@@ -202,6 +202,9 @@ CREATE POLICY "Insertar actividades" ON actividades FOR INSERT WITH CHECK (true)
 CREATE POLICY "Actualizar actividades" ON actividades FOR UPDATE USING (true);
 CREATE POLICY "Eliminar actividades" ON actividades FOR DELETE USING (true);
 CREATE POLICY "Comisión es pública" ON comision_directiva FOR SELECT USING (activo = true);
+-- Editar foto_url y activo/inactivo desde /admin/comision, mismo patron de
+-- RLS abierto que el resto del panel admin
+CREATE POLICY "Actualizar comision" ON comision_directiva FOR UPDATE USING (true);
 CREATE POLICY "Comercios activos son públicos" ON comercios FOR SELECT USING (activo = true);
 CREATE POLICY "Historial es público" ON historial_barrio FOR SELECT USING (true);
 
