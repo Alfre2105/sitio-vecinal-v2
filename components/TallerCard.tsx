@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { User, Phone } from 'lucide-react'
 
 interface Props {
@@ -9,14 +8,14 @@ interface Props {
   telefono: string | null
   descripcion: string | null
   foto_url: string | null
+  volteada: boolean
+  onToggle: () => void
 }
 
-export default function TallerCard({ nombre, profesor, telefono, descripcion, foto_url }: Props) {
-  const [volteada, setVolteada] = useState(false)
-
+export default function TallerCard({ nombre, profesor, telefono, descripcion, foto_url, volteada, onToggle }: Props) {
   return (
     <div
-      onClick={() => setVolteada(v => !v)}
+      onClick={onToggle}
       className="h-56 cursor-pointer select-none"
       style={{ perspective: '1000px' }}
     >

@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 import { supabase } from '@/lib/supabase'
 import ActividadCard from '@/components/ActividadCard'
 import FormularioPropuestaActividad from '@/components/FormularioPropuestaActividad'
-import TallerCard from '@/components/TallerCard'
+import TalleresGrid from '@/components/TalleresGrid'
 import ActividadesTabs from '@/components/ActividadesTabs'
 
 async function getActividades() {
@@ -80,9 +80,7 @@ export default async function ActividadesPage() {
         </div>
       ) : (
         <section className="mb-10">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {talleres.map(t => <TallerCard key={t.id} {...t} />)}
-          </div>
+          <TalleresGrid talleres={talleres} />
         </section>
       )}
 
