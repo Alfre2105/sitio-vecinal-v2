@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { subirImagen } from '@/lib/subirImagen'
 import { Plus, Trash2, Check, X, ImagePlus } from 'lucide-react'
+import CampoArchivo from '@/components/CampoArchivo'
 
 type Actividad = {
   id: string
@@ -177,10 +178,7 @@ export default function AdminActividadesPage() {
             <input name="responsable" required placeholder="Responsable *" className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
             <input name="contacto_inscripcion" required placeholder="Contacto inscripción *" className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
           </div>
-          <div>
-            <label className="text-xs font-semibold text-[#616161] block mb-1">Foto (opcional)</label>
-            <input name="imagen" type="file" accept="image/*" className="w-full text-sm" />
-          </div>
+          <CampoArchivo name="imagen" etiqueta="Foto (opcional)" />
           <div className="flex gap-3">
             <button type="submit" disabled={guardando} className="bg-[#43A047] text-white font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-[#388E3C] disabled:opacity-60">
               {guardando ? 'Guardando...' : 'Guardar'}
@@ -249,10 +247,7 @@ export default function AdminActividadesPage() {
                       <input name="responsable" required placeholder="Responsable *" defaultValue={a.nombre_propone ?? ''} className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
                       <input name="contacto_inscripcion" required placeholder="Contacto inscripción *" defaultValue={a.contacto_propone ?? ''} className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
                     </div>
-                    <div>
-                      <label className="text-xs font-medium text-[#616161] block mb-1">Foto (opcional)</label>
-                      <input name="imagen" type="file" accept="image/*" className="w-full text-sm" />
-                    </div>
+                    <CampoArchivo name="imagen" etiqueta="Foto (opcional)" />
                     <div className="flex gap-3">
                       <button type="submit" disabled={guardando} className="bg-[#43A047] text-white font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-[#388E3C] disabled:opacity-60">
                         {guardando ? 'Publicando...' : 'Publicar actividad'}

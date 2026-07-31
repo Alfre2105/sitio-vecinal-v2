@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { subirImagen } from '@/lib/subirImagen'
 import { Plus, Trash2, ImagePlus, Pencil } from 'lucide-react'
+import CampoArchivo from '@/components/CampoArchivo'
 
 type Taller = {
   id: string
@@ -148,10 +149,7 @@ export default function AdminTalleresPage() {
               <option value="false">Inactivo (oculto)</option>
             </select>
           </div>
-          <div>
-            <label className="text-xs font-semibold text-[#616161] block mb-1">Foto {editando?.foto_url ? '(dejar vacío para mantener la actual)' : '(opcional)'}</label>
-            <input name="foto" type="file" accept="image/*" className="w-full text-sm" />
-          </div>
+          <CampoArchivo name="foto" etiqueta={`Foto ${editando?.foto_url ? '(dejar vacío para mantener la actual)' : '(opcional)'}`} />
           <div className="flex gap-3">
             <button type="submit" disabled={guardando} className="bg-[#1E88E5] text-white font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-[#1565C0] disabled:opacity-60">
               {guardando ? 'Guardando...' : 'Guardar'}
