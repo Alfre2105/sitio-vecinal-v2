@@ -1,18 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { User, Clock } from 'lucide-react'
+import { User, Phone } from 'lucide-react'
 
 interface Props {
   nombre: string
   profesor: string | null
-  dia: string | null
-  horario: string | null
+  telefono: string | null
   descripcion: string | null
   foto_url: string | null
 }
 
-export default function TallerCard({ nombre, profesor, dia, horario, descripcion, foto_url }: Props) {
+export default function TallerCard({ nombre, profesor, telefono, descripcion, foto_url }: Props) {
   const [volteada, setVolteada] = useState(false)
 
   return (
@@ -50,11 +49,15 @@ export default function TallerCard({ nombre, profesor, dia, horario, descripcion
               {profesor}
             </p>
           )}
-          {(dia || horario) && (
-            <p className="text-xs text-[#9E9E9E] mb-3 flex items-center justify-center gap-1.5">
-              <Clock size={12} className="text-[#1E88E5] shrink-0" />
-              {[dia, horario].filter(Boolean).join(' · ')}
-            </p>
+          {telefono && (
+            <a
+              href={`tel:${telefono}`}
+              onClick={e => e.stopPropagation()}
+              className="text-xs text-[#1E88E5] mb-3 flex items-center justify-center gap-1.5 hover:underline"
+            >
+              <Phone size={12} className="shrink-0" />
+              {telefono}
+            </a>
           )}
           {descripcion && (
             <p className="text-xs text-[#9E9E9E] leading-relaxed line-clamp-4">{descripcion}</p>

@@ -95,15 +95,14 @@ CREATE TABLE IF NOT EXISTS cuotas (
 );
 
 -- TALLERES
--- dia y horario son texto libre (no DATE/TIME) porque son actividades
--- recurrentes durante casi todo el año y pueden cambiar de dia/horario/
--- profesor sin que eso implique una fecha puntual como en "actividades".
+-- El dia/horario detallado de cada taller vive en las tablas de grilla
+-- semanal (hardcodeadas en app/actividades/page.tsx), no aca — la tarjeta
+-- de taller solo muestra nombre/profesor/telefono/descripcion/foto.
 CREATE TABLE IF NOT EXISTS talleres (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   nombre TEXT NOT NULL,
   profesor TEXT,
-  dia TEXT,
-  horario TEXT,
+  telefono TEXT,
   descripcion TEXT,
   foto_url TEXT,
   orden INTEGER NOT NULL DEFAULT 0,

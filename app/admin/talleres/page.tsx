@@ -10,8 +10,7 @@ type Taller = {
   id: string
   nombre: string
   profesor: string | null
-  dia: string | null
-  horario: string | null
+  telefono: string | null
   descripcion: string | null
   foto_url: string | null
   orden: number
@@ -94,8 +93,7 @@ export default function AdminTalleresPage() {
     const datos = {
       nombre: data.get('nombre') as string,
       profesor: (data.get('profesor') as string) || null,
-      dia: (data.get('dia') as string) || null,
-      horario: (data.get('horario') as string) || null,
+      telefono: (data.get('telefono') as string) || null,
       descripcion: (data.get('descripcion') as string) || null,
       orden: parseInt(data.get('orden') as string, 10) || 0,
       activo: data.get('activo') === 'true',
@@ -137,10 +135,7 @@ export default function AdminTalleresPage() {
             <input name="profesor" placeholder="Profesor/a" defaultValue={editando?.profesor ?? ''} className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
             <input name="orden" type="number" placeholder="Orden (menor = primero)" defaultValue={editando?.orden ?? 0} className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <input name="dia" placeholder="Día (ej: Lunes y Miércoles)" defaultValue={editando?.dia ?? ''} className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
-            <input name="horario" placeholder="Horario (ej: 18 a 19hs)" defaultValue={editando?.horario ?? ''} className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
-          </div>
+          <input name="telefono" placeholder="Teléfono del profesor/a" defaultValue={editando?.telefono ?? ''} className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
           <textarea name="descripcion" rows={3} placeholder="Descripción" defaultValue={editando?.descripcion ?? ''} className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm resize-none" />
           <div>
             <label className="text-xs font-medium text-[#616161] block mb-1">Estado</label>
@@ -172,7 +167,7 @@ export default function AdminTalleresPage() {
               <tr>
                 <th className="text-left px-5 py-3 font-semibold text-[#616161]">Taller</th>
                 <th className="text-left px-5 py-3 font-semibold text-[#616161] hidden md:table-cell">Profesor</th>
-                <th className="text-left px-5 py-3 font-semibold text-[#616161] hidden lg:table-cell">Día y horario</th>
+                <th className="text-left px-5 py-3 font-semibold text-[#616161] hidden lg:table-cell">Teléfono</th>
                 <th className="text-center px-5 py-3 font-semibold text-[#616161]">Estado</th>
                 <th className="px-5 py-3" />
               </tr>
@@ -182,7 +177,7 @@ export default function AdminTalleresPage() {
                 <tr key={t.id} className={`hover:bg-[#FAFAFA] ${!t.activo ? 'opacity-50' : ''}`}>
                   <td className="px-5 py-4 font-medium text-[#212121]">{t.nombre}</td>
                   <td className="px-5 py-4 text-[#616161] hidden md:table-cell">{t.profesor ?? '—'}</td>
-                  <td className="px-5 py-4 text-[#616161] hidden lg:table-cell">{[t.dia, t.horario].filter(Boolean).join(' · ') || '—'}</td>
+                  <td className="px-5 py-4 text-[#616161] hidden lg:table-cell">{t.telefono ?? '—'}</td>
                   <td className="px-5 py-4 text-center">
                     <button
                       onClick={() => toggleActivo(t)}
