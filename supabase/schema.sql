@@ -94,6 +94,23 @@ CREATE TABLE IF NOT EXISTS cuotas (
   UNIQUE(socio_id, mes, anio)
 );
 
+-- TALLERES
+-- dia y horario son texto libre (no DATE/TIME) porque son actividades
+-- recurrentes durante casi todo el año y pueden cambiar de dia/horario/
+-- profesor sin que eso implique una fecha puntual como en "actividades".
+CREATE TABLE IF NOT EXISTS talleres (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  nombre TEXT NOT NULL,
+  profesor TEXT,
+  dia TEXT,
+  horario TEXT,
+  descripcion TEXT,
+  foto_url TEXT,
+  orden INTEGER NOT NULL DEFAULT 0,
+  activo BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- COMISIÓN DIRECTIVA
 CREATE TABLE IF NOT EXISTS comision_directiva (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -184,6 +201,7 @@ ALTER TABLE comision_directiva ENABLE ROW LEVEL SECURITY;
 ALTER TABLE comercios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE contacto_mensajes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE historial_barrio ENABLE ROW LEVEL SECURITY;
+ALTER TABLE talleres ENABLE ROW LEVEL SECURITY;
 
 -- Políticas de lectura pública (tablas públicas)
 -- Nota: el filtro publicada=true para la portada pública se aplica en la query
@@ -205,6 +223,14 @@ CREATE POLICY "Comisión es pública" ON comision_directiva FOR SELECT USING (ac
 -- Editar foto_url y activo/inactivo desde /admin/comision, mismo patron de
 -- RLS abierto que el resto del panel admin
 CREATE POLICY "Actualizar comision" ON comision_directiva FOR UPDATE USING (true);
+-- Talleres: lectura publica (el filtro activo=true para el sitio se aplica
+-- en la query, no en RLS, porque /admin/talleres necesita ver los inactivos)
+-- y alta/edicion/baja desde /admin/talleres, mismo patron de RLS abierto
+-- que el resto del panel admin.
+CREATE POLICY "Lectura de talleres" ON talleres FOR SELECT USING (true);
+CREATE POLICY "Insertar talleres" ON talleres FOR INSERT WITH CHECK (true);
+CREATE POLICY "Actualizar talleres" ON talleres FOR UPDATE USING (true);
+CREATE POLICY "Eliminar talleres" ON talleres FOR DELETE USING (true);
 CREATE POLICY "Comercios activos son públicos" ON comercios FOR SELECT USING (activo = true);
 CREATE POLICY "Historial es público" ON historial_barrio FOR SELECT USING (true);
 

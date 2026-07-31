@@ -2,6 +2,8 @@ export const dynamic = 'force-dynamic'
 import { supabase } from '@/lib/supabase'
 import ActividadCard from '@/components/ActividadCard'
 import FormularioPropuestaActividad from '@/components/FormularioPropuestaActividad'
+import TallerCard from '@/components/TallerCard'
+import ActividadesTabs from '@/components/ActividadesTabs'
 
 async function getActividades() {
   const hoy = new Date().toISOString().split('T')[0]
@@ -14,25 +16,27 @@ async function getActividades() {
   return data ?? []
 }
 
+async function getTalleres() {
+  const { data } = await supabase
+    .from('talleres')
+    .select('*')
+    .eq('activo', true)
+    .order('orden', { ascending: true })
+  return data ?? []
+}
+
 export const metadata = {
   title: 'Actividades | Asociación Vecinal General Mosconi',
   description: 'Actividades, talleres y eventos del Barrio General Mosconi.',
 }
 
 export default async function ActividadesPage() {
-  const actividades = await getActividades()
+  const [actividades, talleres] = await Promise.all([getActividades(), getTalleres()])
   const gratuitas = actividades.filter(a => a.es_gratuita)
   const pagas = actividades.filter(a => !a.es_gratuita)
 
-  return (
-    <div className="max-w-5xl mx-auto px-4 py-12">
-      <div className="text-center mb-10">
-        <h1 className="text-3xl md:text-4xl font-extrabold text-[#212121] mb-3">Actividades</h1>
-        <p className="text-[#616161] text-lg max-w-2xl mx-auto">
-          Talleres, cursos y eventos para toda la comunidad del barrio.
-        </p>
-      </div>
-
+  const contenidoActividades = (
+    <>
       {actividades.length === 0 && (
         <div className="bg-white rounded-2xl p-12 text-center text-[#9E9E9E] shadow-sm">
           <p className="text-lg mb-2">No hay actividades programadas por el momento.</p>
@@ -60,6 +64,24 @@ export default async function ActividadesPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {pagas.map(a => <ActividadCard key={a.id} {...a} />)}
+          </div>
+        </section>
+      )}
+
+      <FormularioPropuestaActividad />
+    </>
+  )
+
+  const contenidoTalleres = (
+    <>
+      {talleres.length === 0 ? (
+        <div className="bg-white rounded-2xl p-12 text-center text-[#9E9E9E] shadow-sm mb-10">
+          <p className="text-lg">Muy pronto vamos a sumar acá los talleres y profesores del barrio.</p>
+        </div>
+      ) : (
+        <section className="mb-10">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {talleres.map(t => <TallerCard key={t.id} {...t} />)}
           </div>
         </section>
       )}
@@ -201,9 +223,19 @@ export default async function ActividadesPage() {
           </table>
         </div>
       </section>
+    </>
+  )
 
-      {/* Formulario de propuesta */}
-      <FormularioPropuestaActividad />
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-12">
+      <div className="text-center mb-10">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-[#212121] mb-3">Actividades</h1>
+        <p className="text-[#616161] text-lg max-w-2xl mx-auto">
+          Talleres, cursos y eventos para toda la comunidad del barrio.
+        </p>
+      </div>
+
+      <ActividadesTabs actividades={contenidoActividades} talleres={contenidoTalleres} />
     </div>
   )
 }

@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Archivo inválido.' }, { status: 400 })
   }
 
-  const bucketsPermitidos = ['noticias', 'actividades']
+  const bucketsPermitidos = ['noticias', 'actividades', 'talleres']
   if (!bucket || !bucketsPermitidos.includes(bucket)) {
     return NextResponse.json({ error: 'Destino inválido.' }, { status: 400 })
   }
