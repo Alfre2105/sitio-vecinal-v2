@@ -84,6 +84,12 @@ export default function AdminTalleresPage() {
     const form = e.currentTarget
     const data = new FormData(form)
 
+    const archivo = data.get('foto') as File
+    let foto_url: string | undefined
+    if (archivo && archivo.size > 0) {
+      foto_url = (await subirImagen(archivo, 'talleres')) ?? undefined
+    }
+
     const datos = {
       nombre: data.get('nombre') as string,
       profesor: (data.get('profesor') as string) || null,
@@ -92,6 +98,7 @@ export default function AdminTalleresPage() {
       descripcion: (data.get('descripcion') as string) || null,
       orden: parseInt(data.get('orden') as string, 10) || 0,
       activo: data.get('activo') === 'true',
+      ...(foto_url ? { foto_url } : {}),
     }
 
     if (editando) {
@@ -141,9 +148,10 @@ export default function AdminTalleresPage() {
               <option value="false">Inactivo (oculto)</option>
             </select>
           </div>
-          {!editando && (
-            <p className="text-xs text-[#9E9E9E]">La foto se sube después de crear el taller, con el ícono en la lista.</p>
-          )}
+          <div>
+            <label className="text-xs font-semibold text-[#616161] block mb-1">Foto {editando?.foto_url ? '(dejar vacío para mantener la actual)' : '(opcional)'}</label>
+            <input name="foto" type="file" accept="image/*" className="w-full text-sm" />
+          </div>
           <div className="flex gap-3">
             <button type="submit" disabled={guardando} className="bg-[#1E88E5] text-white font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-[#1565C0] disabled:opacity-60">
               {guardando ? 'Guardando...' : 'Guardar'}
