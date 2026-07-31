@@ -21,7 +21,7 @@ async function getTalleres() {
     .from('talleres')
     .select('*')
     .eq('activo', true)
-    .order('orden', { ascending: true })
+    .order('nombre', { ascending: true })
   return data ?? []
 }
 

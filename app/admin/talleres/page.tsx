@@ -13,7 +13,7 @@ type Taller = {
   telefono: string | null
   descripcion: string | null
   foto_url: string | null
-  orden: number
+  es_gratuito: boolean
   activo: boolean
 }
 
@@ -31,7 +31,7 @@ export default function AdminTalleresPage() {
 
   async function cargar() {
     setCargando(true)
-    const { data } = await supabase.from('talleres').select('*').order('orden', { ascending: true })
+    const { data } = await supabase.from('talleres').select('*').order('nombre', { ascending: true })
     setTalleres((data as Taller[]) ?? [])
     setCargando(false)
   }
@@ -95,7 +95,7 @@ export default function AdminTalleresPage() {
       profesor: (data.get('profesor') as string) || null,
       telefono: (data.get('telefono') as string) || null,
       descripcion: (data.get('descripcion') as string) || null,
-      orden: parseInt(data.get('orden') as string, 10) || 0,
+      es_gratuito: data.get('es_gratuito') === 'true',
       activo: data.get('activo') === 'true',
       ...(foto_url ? { foto_url } : {}),
     }
@@ -133,16 +133,24 @@ export default function AdminTalleresPage() {
           <input name="nombre" required placeholder="Nombre del taller *" defaultValue={editando?.nombre} className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
           <div className="grid grid-cols-2 gap-4">
             <input name="profesor" placeholder="Profesor/a" defaultValue={editando?.profesor ?? ''} className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
-            <input name="orden" type="number" placeholder="Orden (menor = primero)" defaultValue={editando?.orden ?? 0} className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
+            <input name="telefono" placeholder="Teléfono del profesor/a" defaultValue={editando?.telefono ?? ''} className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
           </div>
-          <input name="telefono" placeholder="Teléfono del profesor/a" defaultValue={editando?.telefono ?? ''} className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm" />
           <textarea name="descripcion" rows={3} placeholder="Descripción" defaultValue={editando?.descripcion ?? ''} className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm resize-none" />
-          <div>
-            <label className="text-xs font-medium text-[#616161] block mb-1">Estado</label>
-            <select name="activo" defaultValue={editando ? String(editando.activo) : 'true'} className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm bg-white">
-              <option value="true">Activo (visible en el sitio)</option>
-              <option value="false">Inactivo (oculto)</option>
-            </select>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-[#616161] block mb-1">¿Es gratuito?</label>
+              <select name="es_gratuito" defaultValue={editando ? String(editando.es_gratuito) : 'true'} className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm bg-white">
+                <option value="true">Gratuito</option>
+                <option value="false">Rentado</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-[#616161] block mb-1">Estado</label>
+              <select name="activo" defaultValue={editando ? String(editando.activo) : 'true'} className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm bg-white">
+                <option value="true">Activo (visible en el sitio)</option>
+                <option value="false">Inactivo (oculto)</option>
+              </select>
+            </div>
           </div>
           <CampoArchivo name="foto" etiqueta={`Foto ${editando?.foto_url ? '(dejar vacío para mantener la actual)' : '(opcional)'}`} />
           <div className="flex gap-3">
@@ -168,6 +176,7 @@ export default function AdminTalleresPage() {
                 <th className="text-left px-5 py-3 font-semibold text-[#616161]">Taller</th>
                 <th className="text-left px-5 py-3 font-semibold text-[#616161] hidden md:table-cell">Profesor</th>
                 <th className="text-left px-5 py-3 font-semibold text-[#616161] hidden lg:table-cell">Teléfono</th>
+                <th className="text-center px-5 py-3 font-semibold text-[#616161]">Costo</th>
                 <th className="text-center px-5 py-3 font-semibold text-[#616161]">Estado</th>
                 <th className="px-5 py-3" />
               </tr>
@@ -178,6 +187,11 @@ export default function AdminTalleresPage() {
                   <td className="px-5 py-4 font-medium text-[#212121]">{t.nombre}</td>
                   <td className="px-5 py-4 text-[#616161] hidden md:table-cell">{t.profesor ?? '—'}</td>
                   <td className="px-5 py-4 text-[#616161] hidden lg:table-cell">{t.telefono ?? '—'}</td>
+                  <td className="px-5 py-4 text-center">
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${t.es_gratuito ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                      {t.es_gratuito ? 'Gratuito' : 'Rentado'}
+                    </span>
+                  </td>
                   <td className="px-5 py-4 text-center">
                     <button
                       onClick={() => toggleActivo(t)}

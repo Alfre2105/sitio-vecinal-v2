@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS cuotas (
 -- TALLERES
 -- El dia/horario detallado de cada taller vive en las tablas de grilla
 -- semanal (hardcodeadas en app/actividades/page.tsx), no aca — la tarjeta
--- de taller solo muestra nombre/profesor/telefono/descripcion/foto.
+-- de taller solo muestra nombre/profesor/telefono/descripcion/foto/es_gratuito.
 CREATE TABLE IF NOT EXISTS talleres (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   nombre TEXT NOT NULL,
@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS talleres (
   telefono TEXT,
   descripcion TEXT,
   foto_url TEXT,
-  orden INTEGER NOT NULL DEFAULT 0,
+  es_gratuito BOOLEAN NOT NULL DEFAULT true,
   activo BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

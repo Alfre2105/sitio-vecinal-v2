@@ -8,11 +8,12 @@ interface Props {
   telefono: string | null
   descripcion: string | null
   foto_url: string | null
+  es_gratuito: boolean
   volteada: boolean
   onToggle: () => void
 }
 
-export default function TallerCard({ nombre, profesor, telefono, descripcion, foto_url, volteada, onToggle }: Props) {
+export default function TallerCard({ nombre, profesor, telefono, descripcion, foto_url, es_gratuito, volteada, onToggle }: Props) {
   return (
     <div
       onClick={onToggle}
@@ -31,6 +32,9 @@ export default function TallerCard({ nombre, profesor, telefono, descripcion, fo
           {foto_url && (
             <img src={foto_url} alt={nombre} className="absolute inset-0 w-full h-full object-cover" />
           )}
+          <span className={`absolute top-2 right-2 text-[10px] font-semibold px-2 py-0.5 rounded-full ${es_gratuito ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+            {es_gratuito ? 'Gratuito' : 'Rentado'}
+          </span>
           <div className="relative w-full bg-black/50 text-white text-center py-2.5 font-bold text-sm px-2">
             {nombre}
           </div>

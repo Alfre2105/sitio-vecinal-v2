@@ -10,6 +10,7 @@ type Taller = {
   telefono: string | null
   descripcion: string | null
   foto_url: string | null
+  es_gratuito: boolean
 }
 
 export default function TalleresGrid({ talleres }: { talleres: Taller[] }) {
