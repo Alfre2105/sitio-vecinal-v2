@@ -157,6 +157,18 @@ CREATE TABLE IF NOT EXISTS historial_barrio (
   orden INTEGER NOT NULL DEFAULT 0
 );
 
+-- RECUERDOS DEL BARRIO
+-- Fotos que los vecinos comparten por WhatsApp (boton en /historia) y que
+-- la Vecinal sube manualmente desde /admin/recuerdos, con una descripcion
+-- corta. No hay formulario publico de carga, es siempre carga manual.
+CREATE TABLE IF NOT EXISTS recuerdos (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  foto_url TEXT NOT NULL,
+  descripcion TEXT,
+  activo BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- ============================================
 -- DATOS INICIALES - COMISIÓN DIRECTIVA
 -- ============================================
@@ -201,6 +213,7 @@ ALTER TABLE comercios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE contacto_mensajes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE historial_barrio ENABLE ROW LEVEL SECURITY;
 ALTER TABLE talleres ENABLE ROW LEVEL SECURITY;
+ALTER TABLE recuerdos ENABLE ROW LEVEL SECURITY;
 
 -- Políticas de lectura pública (tablas públicas)
 -- Nota: el filtro publicada=true para la portada pública se aplica en la query
@@ -230,6 +243,13 @@ CREATE POLICY "Lectura de talleres" ON talleres FOR SELECT USING (true);
 CREATE POLICY "Insertar talleres" ON talleres FOR INSERT WITH CHECK (true);
 CREATE POLICY "Actualizar talleres" ON talleres FOR UPDATE USING (true);
 CREATE POLICY "Eliminar talleres" ON talleres FOR DELETE USING (true);
+-- Recuerdos: lectura publica (el filtro activo=true para el sitio se aplica
+-- en la query, no en RLS, mismo patron que noticias/actividades/talleres) y
+-- alta/edicion/baja desde /admin/recuerdos
+CREATE POLICY "Lectura de recuerdos" ON recuerdos FOR SELECT USING (true);
+CREATE POLICY "Insertar recuerdos" ON recuerdos FOR INSERT WITH CHECK (true);
+CREATE POLICY "Actualizar recuerdos" ON recuerdos FOR UPDATE USING (true);
+CREATE POLICY "Eliminar recuerdos" ON recuerdos FOR DELETE USING (true);
 CREATE POLICY "Comercios activos son públicos" ON comercios FOR SELECT USING (activo = true);
 CREATE POLICY "Historial es público" ON historial_barrio FOR SELECT USING (true);
 

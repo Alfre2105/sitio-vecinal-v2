@@ -10,13 +10,22 @@ async function getHistorial() {
   return data ?? []
 }
 
+async function getRecuerdos() {
+  const { data } = await supabase
+    .from('recuerdos')
+    .select('*')
+    .eq('activo', true)
+    .order('created_at', { ascending: false })
+  return data ?? []
+}
+
 export const metadata = {
   title: 'Historia de la Vecinal | Asociación Vecinal General Mosconi',
   description: 'Conocé la historia del Barrio General Mosconi y la Asociación Vecinal desde su fundación en 1970.',
 }
 
 export default async function HistoriaPage() {
-  const historial = await getHistorial()
+  const [historial, recuerdos] = await Promise.all([getHistorial(), getRecuerdos()])
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
@@ -74,12 +83,33 @@ export default async function HistoriaPage() {
           Compartí tus fotografías históricas y testimonios para enriquecer la memoria colectiva del Barrio General Mosconi.
         </p>
         <a
-          href="mailto:vecinal.mosconi@gmail.com?subject=Fotos%20históricas%20del%20barrio"
+          href="https://wa.me/5492975402989?text=Hola%2C%20quiero%20compartir%20fotos%20y%20recuerdos%20del%20barrio%20para%20la%20secci%C3%B3n%20de%20Historia%20del%20sitio..."
+          target="_blank"
+          rel="noopener noreferrer"
           className="inline-flex items-center gap-2 bg-[#1E88E5] text-white font-bold px-6 py-3 rounded-xl hover:bg-[#1565C0] transition-colors"
         >
           Compartir mis recuerdos
         </a>
       </div>
+
+      {/* Galería de recuerdos */}
+      {recuerdos.length > 0 && (
+        <div className="mt-10">
+          <h2 className="text-xl font-bold text-[#212121] mb-4">Recuerdos que compartieron los vecinos</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {recuerdos.map(r => (
+              <div key={r.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                <div className="h-36 bg-gray-100">
+                  <img src={r.foto_url} alt={r.descripcion ?? 'Recuerdo del barrio'} className="w-full h-full object-cover" />
+                </div>
+                {r.descripcion && (
+                  <p className="text-xs text-[#616161] p-3 leading-relaxed">{r.descripcion}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { LayoutDashboard, Newspaper, Calendar, Users, Building2, MessageSquare, BarChart3, FileSpreadsheet, GraduationCap } from 'lucide-react'
+import { LayoutDashboard, Newspaper, Calendar, Users, Building2, MessageSquare, BarChart3, FileSpreadsheet, GraduationCap, Camera } from 'lucide-react'
 import AdminGuard from '@/components/AdminGuard'
 
 const navAdmin = [
@@ -10,6 +10,7 @@ const navAdmin = [
   { href: '/admin/reportes', label: 'Reportes', icono: FileSpreadsheet },
   { href: '/admin/actividades', label: 'Actividades', icono: BarChart3 },
   { href: '/admin/talleres', label: 'Talleres', icono: GraduationCap },
+  { href: '/admin/recuerdos', label: 'Recuerdos', icono: Camera },
   { href: '/admin/comision', label: 'Comisión', icono: Building2 },
   { href: '/admin/mensajes', label: 'Mensajes', icono: MessageSquare },
 ]
