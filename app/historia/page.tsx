@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 import { supabase } from '@/lib/supabase'
 import { Camera } from 'lucide-react'
+import RecuerdosGaleria from '@/components/RecuerdosGaleria'
 
 async function getHistorial() {
   const { data } = await supabase
@@ -96,18 +97,7 @@ export default async function HistoriaPage() {
       {recuerdos.length > 0 && (
         <div className="mt-10">
           <h2 className="text-xl font-bold text-[#212121] mb-4">Recuerdos que compartieron los vecinos</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {recuerdos.map(r => (
-              <div key={r.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                <div className="h-36 bg-gray-100">
-                  <img src={r.foto_url} alt={r.descripcion ?? 'Recuerdo del barrio'} className="w-full h-full object-cover" />
-                </div>
-                {r.descripcion && (
-                  <p className="text-xs text-[#616161] p-3 leading-relaxed">{r.descripcion}</p>
-                )}
-              </div>
-            ))}
-          </div>
+          <RecuerdosGaleria recuerdos={recuerdos} />
         </div>
       )}
     </div>
