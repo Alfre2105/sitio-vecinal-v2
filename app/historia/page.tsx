@@ -11,7 +11,7 @@ async function getHistorial() {
 }
 
 export const metadata = {
-  title: 'Historia del Barrio | Asociación Vecinal General Mosconi',
+  title: 'Historia de la Vecinal | Asociación Vecinal General Mosconi',
   description: 'Conocé la historia del Barrio General Mosconi y la Asociación Vecinal desde su fundación en 1970.',
 }
 
@@ -22,7 +22,7 @@ export default async function HistoriaPage() {
     <div className="max-w-4xl mx-auto px-4 py-12">
       <div className="text-center mb-12">
         <h1 className="text-3xl md:text-4xl font-extrabold text-[#212121] mb-3">
-          Historia del Barrio
+          Historia de la Vecinal
         </h1>
         <p className="text-[#616161] text-lg max-w-2xl mx-auto">
           Desde la fundación el 4 de octubre de 1970, la Asociación Vecinal General Mosconi ha sido el corazón de nuestra comunidad.
