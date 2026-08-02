@@ -35,6 +35,7 @@ export default function LoginSocio() {
   const [error, setError] = useState('')
   const [socio, setSocio] = useState<SocioData | null>(null)
   const [cuotas, setCuotas] = useState<CuotaData[]>([])
+  const [deudaTotal, setDeudaTotal] = useState(0)
   const [anio, setAnio] = useState(new Date().getFullYear())
 
   async function cargarCuotas(socioId: string, anioConsulta: number) {
@@ -77,6 +78,18 @@ export default function LoginSocio() {
 
     const anioActual = new Date().getFullYear()
     setAnio(anioActual)
+
+    // Deuda total: suma todos los años, no solo el actual, porque hay
+    // socios que arrastran meses o años anteriores sin pagar.
+    const { data: todasCuotas } = await supabase
+      .from('cuotas')
+      .select('pagada, monto')
+      .eq('socio_id', socioData.id)
+    const total = ((todasCuotas as { pagada: boolean; monto: number }[]) ?? [])
+      .filter(c => !c.pagada)
+      .reduce((acc, c) => acc + Number(c.monto), 0)
+    setDeudaTotal(total)
+
     await cargarCuotas(socioData.id, anioActual)
     setBuscando(false)
   }
@@ -102,6 +115,13 @@ export default function LoginSocio() {
             </div>
           </div>
         </div>
+
+        {deudaTotal > 0 && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-5 text-center">
+            <p className="text-red-700 font-bold">Deuda total acumulada: ${deudaTotal.toLocaleString('es-AR')}</p>
+            <p className="text-red-600 text-xs mt-1">Suma de todas las cuotas pendientes, de todos los años.</p>
+          </div>
+        )}
 
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <h3 className="font-bold text-[#212121] mb-4">Datos personales</h3>
@@ -141,7 +161,7 @@ export default function LoginSocio() {
           </div>
 
           {deuda > 0 && (
-            <p className="text-red-600 font-bold text-sm mb-3">Deuda pendiente: ${deuda.toLocaleString('es-AR')}</p>
+            <p className="text-red-600 font-bold text-sm mb-3">Deuda de {anio}: ${deuda.toLocaleString('es-AR')}</p>
           )}
 
           {cuotas.length === 0 ? (

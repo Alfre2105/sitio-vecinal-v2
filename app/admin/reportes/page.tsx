@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { fetchTodasCuotas } from '@/lib/fetchCuotas'
 import { Download, DollarSign, AlertCircle, Users, TrendingUp } from 'lucide-react'
 
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
@@ -36,7 +37,8 @@ function escaparCsv(valor: string | number) {
 export default function AdminReportesPage() {
   const [anio, setAnio] = useState(new Date().getFullYear())
   const [socios, setSocios] = useState<Socio[]>([])
-  const [cuotas, setCuotas] = useState<Cuota[]>([])
+  const [cuotasAnio, setCuotasAnio] = useState<Cuota[]>([])
+  const [cuotasTodas, setCuotasTodas] = useState<Cuota[]>([])
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
@@ -46,35 +48,39 @@ export default function AdminReportesPage() {
 
   async function cargar() {
     setCargando(true)
-    const [{ data: sociosData }, { data: cuotasData }] = await Promise.all([
+    const [{ data: sociosData }, cuotasAnioData, cuotasTodasData] = await Promise.all([
       supabase.from('socios').select('id, dni, numero_socio, nombre, apellido, email, telefono, categoria, activo').order('apellido', { ascending: true }),
-      supabase.from('cuotas').select('socio_id, mes, anio, monto, pagada').eq('anio', anio),
+      fetchTodasCuotas({ anio }),
+      fetchTodasCuotas(),
     ])
     setSocios((sociosData as Socio[]) ?? [])
-    setCuotas((cuotasData as Cuota[]) ?? [])
+    setCuotasAnio(cuotasAnioData)
+    setCuotasTodas(cuotasTodasData)
     setCargando(false)
   }
 
+  // Resumen por socio con TODOS los años — la deuda real de un socio puede
+  // incluir meses o años anteriores, no solo el año que se está mirando.
   const resumenPorSocio = useMemo(() => {
     const mapa: Record<string, { pagadas: number; pendientes: number; deuda: number }> = {}
-    for (const c of cuotas) {
+    for (const c of cuotasTodas) {
       const r = mapa[c.socio_id] ?? { pagadas: 0, pendientes: 0, deuda: 0 }
       if (c.pagada) r.pagadas++
       else { r.pendientes++; r.deuda += Number(c.monto) }
       mapa[c.socio_id] = r
     }
     return mapa
-  }, [cuotas])
+  }, [cuotasTodas])
 
   const activos = socios.filter(s => s.activo)
-  const recaudadoAnio = cuotas.filter(c => c.pagada).reduce((acc, c) => acc + Number(c.monto), 0)
-  const deudaAnio = cuotas.filter(c => !c.pagada).reduce((acc, c) => acc + Number(c.monto), 0)
+  const recaudadoAnio = cuotasAnio.filter(c => c.pagada).reduce((acc, c) => acc + Number(c.monto), 0)
+  const deudaTotal = Object.values(resumenPorSocio).reduce((acc, r) => acc + r.deuda, 0)
   const sociosAlDia = activos.filter(s => (resumenPorSocio[s.id]?.pendientes ?? 0) === 0 && (resumenPorSocio[s.id]?.pagadas ?? 0) > 0)
   const sociosConDeuda = activos.filter(s => (resumenPorSocio[s.id]?.pendientes ?? 0) > 0)
 
   const porMes = MESES.map((nombre, i) => {
     const mes = i + 1
-    const delMes = cuotas.filter(c => c.mes === mes)
+    const delMes = cuotasAnio.filter(c => c.mes === mes)
     return {
       nombre,
       recaudado: delMes.filter(c => c.pagada).reduce((acc, c) => acc + Number(c.monto), 0),
@@ -93,7 +99,7 @@ export default function AdminReportesPage() {
     .sort((a, b) => (b.resumen?.deuda ?? 0) - (a.resumen?.deuda ?? 0))
 
   function exportarCsv() {
-    const encabezado = ['Apellido', 'Nombre', 'DNI', 'N° Socio', 'Categoría', 'Estado', 'Email', 'Teléfono', `Cuotas pagadas ${anio}`, `Cuotas pendientes ${anio}`, `Deuda ${anio}`]
+    const encabezado = ['Apellido', 'Nombre', 'DNI', 'N° Socio', 'Categoría', 'Estado', 'Email', 'Teléfono', 'Cuotas pagadas (total)', 'Cuotas pendientes (total)', 'Deuda total']
     const filas = socios.map(s => {
       const r = resumenPorSocio[s.id]
       return [
@@ -106,7 +112,7 @@ export default function AdminReportesPage() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `socios-cuotas-${anio}.csv`
+    a.download = `socios-cuotas.csv`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -119,10 +125,13 @@ export default function AdminReportesPage() {
           <p className="text-sm text-[#9E9E9E] mt-0.5">Estado contable de los socios</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <button onClick={() => setAnio(a => a - 1)} className="px-3 py-1.5 border border-[#E0E0E0] rounded-lg text-sm hover:bg-gray-50 bg-white">←</button>
-            <span className="font-semibold text-[#212121] w-14 text-center">{anio}</span>
-            <button onClick={() => setAnio(a => a + 1)} className="px-3 py-1.5 border border-[#E0E0E0] rounded-lg text-sm hover:bg-gray-50 bg-white">→</button>
+          <div className="text-right">
+            <div className="flex items-center gap-2">
+              <button onClick={() => setAnio(a => a - 1)} className="px-3 py-1.5 border border-[#E0E0E0] rounded-lg text-sm hover:bg-gray-50 bg-white">←</button>
+              <span className="font-semibold text-[#212121] w-14 text-center">{anio}</span>
+              <button onClick={() => setAnio(a => a + 1)} className="px-3 py-1.5 border border-[#E0E0E0] rounded-lg text-sm hover:bg-gray-50 bg-white">→</button>
+            </div>
+            <p className="text-[10px] text-[#9E9E9E] mt-0.5">Solo afecta recaudado y recaudación por mes</p>
           </div>
           <button onClick={exportarCsv} className="bg-[#1E88E5] text-white font-semibold px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-[#1565C0] text-sm">
             <Download size={18} /> Exportar CSV
@@ -142,8 +151,8 @@ export default function AdminReportesPage() {
             </div>
             <div className="bg-white rounded-2xl shadow-sm p-5">
               <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center mb-3"><AlertCircle size={20} /></div>
-              <div className="text-2xl font-extrabold text-[#212121]">${deudaAnio.toLocaleString('es-AR')}</div>
-              <div className="text-[#9E9E9E] text-sm mt-1">Deuda pendiente {anio}</div>
+              <div className="text-2xl font-extrabold text-[#212121]">${deudaTotal.toLocaleString('es-AR')}</div>
+              <div className="text-[#9E9E9E] text-sm mt-1">Deuda total acumulada</div>
             </div>
             <div className="bg-white rounded-2xl shadow-sm p-5">
               <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#1E88E5] flex items-center justify-center mb-3"><Users size={20} /></div>
@@ -195,11 +204,11 @@ export default function AdminReportesPage() {
 
           <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
             <div className="p-6 pb-4">
-              <h2 className="font-bold text-[#212121]">Socios con deuda — {anio}</h2>
-              <p className="text-xs text-[#9E9E9E] mt-1">Ordenados de mayor a menor deuda</p>
+              <h2 className="font-bold text-[#212121]">Socios con deuda</h2>
+              <p className="text-xs text-[#9E9E9E] mt-1">Deuda acumulada de todos los años, ordenados de mayor a menor</p>
             </div>
             {morosos.length === 0 ? (
-              <p className="text-[#9E9E9E] text-sm text-center py-8">No hay socios con cuotas pendientes este año.</p>
+              <p className="text-[#9E9E9E] text-sm text-center py-8">No hay socios con cuotas pendientes.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">

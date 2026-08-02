@@ -25,6 +25,7 @@ type Props = {
 export default function GestionCuotasModal({ socioId, socioNombre, onClose, onCambio }: Props) {
   const [anio, setAnio] = useState(new Date().getFullYear())
   const [cuotas, setCuotas] = useState<Cuota[]>([])
+  const [deudaTotal, setDeudaTotal] = useState(0)
   const [cargando, setCargando] = useState(true)
   const [montoDefault, setMontoDefault] = useState('5000')
 
@@ -35,13 +36,15 @@ export default function GestionCuotasModal({ socioId, socioNombre, onClose, onCa
 
   async function cargar() {
     setCargando(true)
-    const { data } = await supabase
-      .from('cuotas')
-      .select('*')
-      .eq('socio_id', socioId)
-      .eq('anio', anio)
-      .order('mes', { ascending: true })
+    const [{ data }, { data: todasData }] = await Promise.all([
+      supabase.from('cuotas').select('*').eq('socio_id', socioId).eq('anio', anio).order('mes', { ascending: true }),
+      supabase.from('cuotas').select('pagada, monto').eq('socio_id', socioId),
+    ])
     setCuotas((data as Cuota[]) ?? [])
+    const total = ((todasData as { pagada: boolean; monto: number }[]) ?? [])
+      .filter(c => !c.pagada)
+      .reduce((acc, c) => acc + Number(c.monto), 0)
+    setDeudaTotal(total)
     setCargando(false)
     onCambio?.()
   }
@@ -94,6 +97,12 @@ export default function GestionCuotasModal({ socioId, socioNombre, onClose, onCa
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100"><X size={20} /></button>
         </div>
 
+        {deudaTotal > 0 && (
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 mb-4 text-sm text-red-700 font-semibold">
+            Deuda total acumulada (todos los años): ${deudaTotal.toLocaleString('es-AR')}
+          </div>
+        )}
+
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <button onClick={() => setAnio(a => a - 1)} className="px-3 py-1.5 border border-[#E0E0E0] rounded-lg text-sm hover:bg-gray-50">←</button>
@@ -103,7 +112,7 @@ export default function GestionCuotasModal({ socioId, socioNombre, onClose, onCa
           <div className="flex items-center gap-3 text-xs">
             <span className="text-green-600 font-medium">{pagadas} pagadas</span>
             <span className="text-red-500 font-medium">{cuotas.length - pagadas} pendientes</span>
-            {deuda > 0 && <span className="text-red-600 font-bold">Debe ${deuda.toLocaleString('es-AR')}</span>}
+            {deuda > 0 && <span className="text-red-600 font-bold">Debe ${deuda.toLocaleString('es-AR')} en {anio}</span>}
           </div>
         </div>
 

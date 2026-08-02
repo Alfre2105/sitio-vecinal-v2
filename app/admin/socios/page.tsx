@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Search, Users, Check, X, FileText, Plus, Trash2, Wallet, Pencil } from 'lucide-react'
 import GestionCuotasModal from '@/components/GestionCuotasModal'
+import { fetchTodasCuotas } from '@/lib/fetchCuotas'
 
 type Socio = {
   id: string
@@ -42,7 +43,7 @@ export default function AdminSociosPage() {
   const [guardando, setGuardando] = useState(false)
   const [errorForm, setErrorForm] = useState('')
   const [cuotasSocio, setCuotasSocio] = useState<Socio | null>(null)
-  const [resumenCuotas, setResumenCuotas] = useState<Record<string, { pagadas: number; pendientes: number }>>({})
+  const [resumenCuotas, setResumenCuotas] = useState<Record<string, { pagadas: number; pendientes: number; deuda: number }>>({})
 
   useEffect(() => {
     cargar()
@@ -60,13 +61,14 @@ export default function AdminSociosPage() {
   }
 
   async function cargarResumenCuotas() {
-    const anioActual = new Date().getFullYear()
-    const { data } = await supabase.from('cuotas').select('socio_id, pagada').eq('anio', anioActual)
-    const resumen: Record<string, { pagadas: number; pendientes: number }> = {}
-    for (const c of (data as { socio_id: string; pagada: boolean }[]) ?? []) {
-      const r = resumen[c.socio_id] ?? { pagadas: 0, pendientes: 0 }
+    // Suma todos los años, no solo el actual, para reflejar la deuda real
+    // acumulada (hay socios que deben meses de años anteriores).
+    const data = await fetchTodasCuotas()
+    const resumen: Record<string, { pagadas: number; pendientes: number; deuda: number }> = {}
+    for (const c of data) {
+      const r = resumen[c.socio_id] ?? { pagadas: 0, pendientes: 0, deuda: 0 }
       if (c.pagada) r.pagadas++
-      else r.pendientes++
+      else { r.pendientes++; r.deuda += Number(c.monto) }
       resumen[c.socio_id] = r
     }
     setResumenCuotas(resumen)
@@ -311,7 +313,7 @@ export default function AdminSociosPage() {
                   <th className="text-left px-5 py-3 font-semibold text-[#616161] hidden md:table-cell">DNI</th>
                   <th className="text-left px-5 py-3 font-semibold text-[#616161] hidden lg:table-cell">Contacto</th>
                   <th className="text-center px-5 py-3 font-semibold text-[#616161]">Categoría</th>
-                  <th className="text-center px-5 py-3 font-semibold text-[#616161]">Cuotas {new Date().getFullYear()}</th>
+                  <th className="text-center px-5 py-3 font-semibold text-[#616161]">Deuda</th>
                   <th className="px-5 py-3" />
                 </tr>
               </thead>
@@ -338,7 +340,7 @@ export default function AdminSociosPage() {
                         const r = resumenCuotas[s.id]
                         if (!r) return <span className="text-xs text-[#9E9E9E]">Sin cargar</span>
                         if (r.pendientes === 0) return <span className="text-xs font-semibold text-green-600">Al día</span>
-                        return <span className="text-xs font-semibold text-red-600">Debe {r.pendientes}</span>
+                        return <span className="text-xs font-semibold text-red-600">Debe {r.pendientes} (${r.deuda.toLocaleString('es-AR')})</span>
                       })()}
                     </td>
                     <td className="px-5 py-4 text-right">
