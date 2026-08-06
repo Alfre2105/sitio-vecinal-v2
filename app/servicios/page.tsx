@@ -56,7 +56,7 @@ export default function ServiciosPage() {
       {/* Botón principal */}
       <div className="text-center">
         <a
-          href="https://mosconi-servicios-fwxc.vercel.app"
+          href="https://mosconiservicios.vercel.app"
           className="inline-flex items-center gap-2 bg-[#1E88E5] hover:bg-[#1565C0] text-white font-bold px-8 py-4 rounded-2xl text-lg transition-colors shadow-md"
         >
           Ir a Mosconi Servicios
