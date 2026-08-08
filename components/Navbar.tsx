@@ -10,6 +10,7 @@ const links = [
   { href: '/quienes-somos', label: 'Quiénes somos' },
   { href: '/historia', label: 'Historia' },
   { href: '/actividades', label: 'Actividades' },
+  { href: '/comercios', label: 'Comercios' },
   { href: '/salon', label: 'Salón' },
   { href: '/socios', label: 'Área de Socios' },
   { href: '/seguridad', label: 'Seguridad' },

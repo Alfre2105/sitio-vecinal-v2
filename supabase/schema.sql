@@ -122,15 +122,23 @@ CREATE TABLE IF NOT EXISTS comision_directiva (
 );
 
 -- COMERCIOS
+-- Mismo patron que actividades: el comercio puede anotarse solo desde el
+-- sitio (origen='comercio', estado='pendiente', datos minimos) o cargarlo
+-- la Vecinal directo (origen='vecinal', estado='aprobado' de una). Una vez
+-- aprobado sigue siendo editable en cualquier momento porque las ofertas
+-- (beneficio_socios) cambian semana a semana o mes a mes.
 CREATE TABLE IF NOT EXISTS comercios (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   nombre TEXT NOT NULL,
   rubro TEXT NOT NULL,
-  descripcion TEXT NOT NULL,
+  descripcion TEXT,
   beneficio_socios TEXT,
   telefono TEXT,
   direccion TEXT,
   imagen_url TEXT,
+  origen TEXT NOT NULL DEFAULT 'vecinal' CHECK (origen IN ('vecinal', 'comercio')),
+  estado TEXT NOT NULL DEFAULT 'aprobado' CHECK (estado IN ('pendiente', 'aprobado', 'rechazado')),
+  contacto_nombre TEXT,
   activo BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -250,7 +258,14 @@ CREATE POLICY "Lectura de recuerdos" ON recuerdos FOR SELECT USING (true);
 CREATE POLICY "Insertar recuerdos" ON recuerdos FOR INSERT WITH CHECK (true);
 CREATE POLICY "Actualizar recuerdos" ON recuerdos FOR UPDATE USING (true);
 CREATE POLICY "Eliminar recuerdos" ON recuerdos FOR DELETE USING (true);
-CREATE POLICY "Comercios activos son públicos" ON comercios FOR SELECT USING (activo = true);
+-- Lectura abierta (el filtro estado='aprobado'/activo=true para el sitio se
+-- aplica en la query, no en RLS, porque /admin/comercios necesita ver
+-- pendientes/inactivos) y alta/edicion/baja desde /admin/comercios. INSERT
+-- publico habilitado para el formulario de "Anotá tu comercio".
+CREATE POLICY "Lectura de comercios" ON comercios FOR SELECT USING (true);
+CREATE POLICY "Insertar comercios" ON comercios FOR INSERT WITH CHECK (true);
+CREATE POLICY "Actualizar comercios" ON comercios FOR UPDATE USING (true);
+CREATE POLICY "Eliminar comercios" ON comercios FOR DELETE USING (true);
 CREATE POLICY "Historial es público" ON historial_barrio FOR SELECT USING (true);
 
 -- Cualquiera puede insertar mensajes de contacto y reservas
