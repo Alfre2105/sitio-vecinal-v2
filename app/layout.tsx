@@ -4,6 +4,8 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import BotonWhatsApp from '@/components/BotonWhatsApp'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Asociación Vecinal General Mosconi | Comodoro Rivadavia',
   description: 'Sitio oficial de la Asociación Vecinal General Mosconi, Comodoro Rivadavia, Chubut. Reserva el salón, área de socios, noticias y actividades del barrio.',

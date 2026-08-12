@@ -155,6 +155,21 @@ CREATE TABLE IF NOT EXISTS contacto_mensajes (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- ENLACES DE INTERES
+-- Sitios externos utiles para los vecinos (cooperativa, ENCoSeP, municipio,
+-- etc.), mostrados en el footer. Sin flujo de aprobacion, siempre lo carga
+-- la Vecinal directo.
+CREATE TABLE IF NOT EXISTS enlaces_interes (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  nombre TEXT NOT NULL,
+  url TEXT NOT NULL,
+  descripcion TEXT,
+  icono_url TEXT,
+  orden INTEGER NOT NULL DEFAULT 0,
+  activo BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- HISTORIAL DEL BARRIO
 CREATE TABLE IF NOT EXISTS historial_barrio (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -222,6 +237,7 @@ ALTER TABLE contacto_mensajes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE historial_barrio ENABLE ROW LEVEL SECURITY;
 ALTER TABLE talleres ENABLE ROW LEVEL SECURITY;
 ALTER TABLE recuerdos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE enlaces_interes ENABLE ROW LEVEL SECURITY;
 
 -- Políticas de lectura pública (tablas públicas)
 -- Nota: el filtro publicada=true para la portada pública se aplica en la query
@@ -258,6 +274,10 @@ CREATE POLICY "Lectura de recuerdos" ON recuerdos FOR SELECT USING (true);
 CREATE POLICY "Insertar recuerdos" ON recuerdos FOR INSERT WITH CHECK (true);
 CREATE POLICY "Actualizar recuerdos" ON recuerdos FOR UPDATE USING (true);
 CREATE POLICY "Eliminar recuerdos" ON recuerdos FOR DELETE USING (true);
+CREATE POLICY "Lectura de enlaces" ON enlaces_interes FOR SELECT USING (true);
+CREATE POLICY "Insertar enlaces" ON enlaces_interes FOR INSERT WITH CHECK (true);
+CREATE POLICY "Actualizar enlaces" ON enlaces_interes FOR UPDATE USING (true);
+CREATE POLICY "Eliminar enlaces" ON enlaces_interes FOR DELETE USING (true);
 -- Lectura abierta (el filtro estado='aprobado'/activo=true para el sitio se
 -- aplica en la query, no en RLS, porque /admin/comercios necesita ver
 -- pendientes/inactivos) y alta/edicion/baja desde /admin/comercios. INSERT

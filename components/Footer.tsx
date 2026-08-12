@@ -1,12 +1,24 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { MapPin, Mail, Phone } from 'lucide-react'
+import { MapPin, Mail, Phone, Link2, ExternalLink } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
-export default function Footer() {
+async function getEnlaces() {
+  const { data } = await supabase
+    .from('enlaces_interes')
+    .select('*')
+    .eq('activo', true)
+    .order('orden', { ascending: true })
+  return data ?? []
+}
+
+export default async function Footer() {
+  const enlaces = await getEnlaces()
+
   return (
     <footer className="bg-[#1565C0] text-white mt-16">
       <div className="max-w-6xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className={`grid grid-cols-1 sm:grid-cols-2 gap-8 ${enlaces.length > 0 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
           {/* Identidad */}
           <div>
             <h3 className="font-bold text-lg mb-3">Asociación Vecinal<br />General Mosconi</h3>
@@ -38,6 +50,35 @@ export default function Footer() {
               <li><Link href="/admin" className="hover:opacity-100 hover:underline">Panel administrativo</Link></li>
             </ul>
           </div>
+
+          {/* Enlaces de interés */}
+          {enlaces.length > 0 && (
+            <div>
+              <h3 className="font-bold text-lg mb-3">Enlaces de interés</h3>
+              <ul className="space-y-3 text-sm opacity-80">
+                {enlaces.map(en => (
+                  <li key={en.id}>
+                    <a
+                      href={en.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 hover:opacity-100 hover:underline"
+                    >
+                      <span className="w-6 h-6 rounded bg-white/15 flex items-center justify-center shrink-0 overflow-hidden">
+                        {en.icono_url ? (
+                          <img src={en.icono_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <Link2 size={13} />
+                        )}
+                      </span>
+                      <span className="flex-1">{en.nombre}</span>
+                      <ExternalLink size={12} className="opacity-60 shrink-0" />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Contacto */}
           <div>
