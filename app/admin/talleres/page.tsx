@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { subirImagen } from '@/lib/subirImagen'
-import { Plus, Trash2, ImagePlus, Pencil } from 'lucide-react'
+import { Plus, Trash2, ImagePlus, ImageOff, Pencil } from 'lucide-react'
 import CampoArchivo from '@/components/CampoArchivo'
 
 type Taller = {
@@ -65,6 +65,12 @@ export default function AdminTalleresPage() {
       setTalleres(prev => prev.map(t => t.id === id ? { ...t, foto_url: url } : t))
     }
     setSubiendoId(null)
+  }
+
+  async function quitarFoto(id: string) {
+    if (!confirm('¿Quitar la foto de este taller?')) return
+    await supabase.from('talleres').update({ foto_url: null }).eq('id', id)
+    setTalleres(prev => prev.map(t => t.id === id ? { ...t, foto_url: null } : t))
   }
 
   async function eliminar(id: string) {
@@ -211,6 +217,9 @@ export default function AdminTalleresPage() {
                       >
                         <ImagePlus size={16} />
                       </button>
+                      {t.foto_url && (
+                        <button onClick={() => quitarFoto(t.id)} className="p-1.5 rounded-lg hover:bg-orange-50 text-orange-500" title="Quitar foto"><ImageOff size={16} /></button>
+                      )}
                       <button onClick={() => eliminar(t.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500" title="Eliminar taller"><Trash2 size={16} /></button>
                     </div>
                   </td>

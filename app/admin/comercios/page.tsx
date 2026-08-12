@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { subirImagen } from '@/lib/subirImagen'
-import { Plus, Trash2, Check, X, ImagePlus, Pencil } from 'lucide-react'
+import { Plus, Trash2, Check, X, ImagePlus, ImageOff, Pencil } from 'lucide-react'
 import CampoArchivo from '@/components/CampoArchivo'
 
 type Comercio = {
@@ -70,6 +70,12 @@ export default function AdminComerciosPage() {
       setComercios(prev => prev.map(c => c.id === id ? { ...c, imagen_url: url } : c))
     }
     setSubiendoId(null)
+  }
+
+  async function quitarFoto(id: string) {
+    if (!confirm('¿Quitar la foto de este comercio?')) return
+    await supabase.from('comercios').update({ imagen_url: null }).eq('id', id)
+    setComercios(prev => prev.map(c => c.id === id ? { ...c, imagen_url: null } : c))
   }
 
   async function eliminar(id: string) {
@@ -306,6 +312,9 @@ export default function AdminComerciosPage() {
                       >
                         <ImagePlus size={16} />
                       </button>
+                      {c.imagen_url && (
+                        <button onClick={() => quitarFoto(c.id)} className="p-1.5 rounded-lg hover:bg-orange-50 text-orange-500" title="Quitar foto"><ImageOff size={16} /></button>
+                      )}
                       {c.estado === 'aprobado' && (
                         <button
                           onClick={() => toggleActivo(c)}
