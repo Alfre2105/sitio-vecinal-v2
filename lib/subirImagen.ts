@@ -1,4 +1,4 @@
-export async function subirImagen(file: File, bucket: 'noticias' | 'actividades' | 'talleres' | 'recuerdos' | 'comercios'): Promise<string | null> {
+export async function subirImagen(file: File, bucket: 'noticias' | 'actividades' | 'talleres' | 'recuerdos' | 'comercios' | 'comision'): Promise<string | null> {
   const formData = new FormData()
   formData.append('file', file)
   formData.append('bucket', bucket)
