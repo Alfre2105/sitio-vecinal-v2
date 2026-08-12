@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { subirImagen } from '@/lib/subirImagen'
-import { User, ImagePlus, Pencil, Trash2, Plus } from 'lucide-react'
+import { User, ImagePlus, ImageOff, Pencil, Trash2, Plus } from 'lucide-react'
 import CampoArchivo from '@/components/CampoArchivo'
 
 type Miembro = {
@@ -64,6 +64,12 @@ export default function AdminComisionPage() {
       setMiembros(prev => prev.map(m => m.id === id ? { ...m, foto_url: url } : m))
     }
     setSubiendoId(null)
+  }
+
+  async function quitarFoto(id: string) {
+    if (!confirm('¿Quitar la foto de este integrante? Va a volver a mostrar el ícono genérico.')) return
+    await supabase.from('comision_directiva').update({ foto_url: null }).eq('id', id)
+    setMiembros(prev => prev.map(m => m.id === id ? { ...m, foto_url: null } : m))
   }
 
   async function eliminar(id: string) {
@@ -194,6 +200,9 @@ export default function AdminComisionPage() {
                 >
                   <ImagePlus size={16} />
                 </button>
+                {m.foto_url && (
+                  <button onClick={() => quitarFoto(m.id)} className="p-1.5 rounded-lg hover:bg-orange-50 text-orange-500" title="Quitar foto"><ImageOff size={16} /></button>
+                )}
                 <button onClick={() => eliminar(m.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500" title="Eliminar integrante"><Trash2 size={16} /></button>
               </div>
             ))}
