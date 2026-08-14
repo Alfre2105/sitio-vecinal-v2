@@ -1,4 +1,5 @@
 import CalendarioSalon from '@/components/CalendarioSalon'
+import FotosSalon from '@/components/FotosSalon'
 import { CheckCircle, Users, Clock, DollarSign, Phone } from 'lucide-react'
 
 export const metadata = {
@@ -54,10 +55,7 @@ export default function SalonPage() {
           {/* Fotos del salón */}
           <div className="bg-white rounded-2xl shadow-sm p-6">
             <h2 className="font-bold text-[#212121] text-lg mb-4">Fotos del salón</h2>
-            <div className="grid grid-cols-2 gap-2">
-              <img src="/salon-1.jpg" alt="Salón comunitario" className="rounded-xl aspect-video object-cover w-full" />
-              <img src="/salon-2.jpg" alt="Salón comunitario" className="rounded-xl aspect-video object-cover w-full" />
-            </div>
+            <FotosSalon />
           </div>
 
           {/* Contacto directo */}
