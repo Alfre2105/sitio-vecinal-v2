@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { LogIn, CheckCircle, XCircle, CreditCard, User, Phone, MapPin } from 'lucide-react'
+import { LogIn, CheckCircle, XCircle, Landmark, User, Phone, MapPin } from 'lucide-react'
 
 const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
 
@@ -187,9 +187,15 @@ export default function LoginSocio() {
           )}
 
           <div className="mt-5 bg-[#F4F6F9] rounded-xl p-4 text-center">
-            <CreditCard size={24} className="text-[#9E9E9E] mx-auto mb-2" />
-            <p className="text-sm font-medium text-[#616161]">Pago online de cuotas</p>
-            <p className="text-xs text-[#9E9E9E] mt-1">Próximamente — integración con MercadoPago</p>
+            <Landmark size={24} className="text-[#9E9E9E] mx-auto mb-2" />
+            <p className="text-sm font-medium text-[#616161] mb-2">Pago de cuotas</p>
+            <p className="text-sm text-[#616161]">Podés transferir desde tu banco a</p>
+            <p className="text-sm font-medium text-[#424242] bg-[#E8EAED] inline-block px-2.5 py-1 rounded-md my-2">VECINAL.MOSCONI</p>
+            <p className="text-xs text-[#9E9E9E] mb-2">(nuestro alias)</p>
+            <p className="text-sm text-[#616161]">
+              y compartir el comprobante por WhatsApp al{' '}
+              <span className="font-medium text-[#424242]">297 502-9223</span>
+            </p>
           </div>
         </div>
 
