@@ -3,11 +3,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { subirImagen } from '@/lib/subirImagen'
-import { Plus, Eye, EyeOff, Trash2, Edit, ImagePlus } from 'lucide-react'
+import { Plus, Eye, EyeOff, Trash2, Pencil, ImagePlus } from 'lucide-react'
+import CampoArchivo from '@/components/CampoArchivo'
 
 type Noticia = {
   id: string
   titulo: string
+  resumen: string
+  contenido: string
   categoria: string
   fecha: string
   publicada: boolean
@@ -18,6 +21,7 @@ export default function AdminNoticiasPage() {
   const [noticias, setNoticias] = useState<Noticia[]>([])
   const [cargando, setCargando] = useState(true)
   const [mostrarForm, setMostrarForm] = useState(false)
+  const [editando, setEditando] = useState<Noticia | null>(null)
   const [guardando, setGuardando] = useState(false)
   const [subiendoId, setSubiendoId] = useState<string | null>(null)
   const inputImagenRef = useRef<HTMLInputElement>(null)
@@ -31,10 +35,21 @@ export default function AdminNoticiasPage() {
     setCargando(true)
     const { data } = await supabase
       .from('noticias')
-      .select('id, titulo, categoria, fecha, publicada, imagen_url')
+      .select('id, titulo, resumen, contenido, categoria, fecha, publicada, imagen_url')
       .order('fecha', { ascending: false })
-    setNoticias(data ?? [])
+    setNoticias((data as Noticia[]) ?? [])
     setCargando(false)
+  }
+
+  function abrirNuevo() {
+    setEditando(null)
+    setMostrarForm(true)
+  }
+
+  function abrirEditar(n: Noticia) {
+    setEditando(n)
+    setMostrarForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function abrirSelectorImagen(id: string) {
@@ -68,30 +83,36 @@ export default function AdminNoticiasPage() {
     setNoticias(prev => prev.filter(n => n.id !== id))
   }
 
-  async function handleCrear(e: React.FormEvent<HTMLFormElement>) {
+  async function handleGuardar(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setGuardando(true)
     const form = e.currentTarget
     const data = new FormData(form)
 
     const archivo = data.get('imagen') as File
-    let imagen_url: string | null = null
+    let imagen_url: string | undefined
     if (archivo && archivo.size > 0) {
-      imagen_url = await subirImagen(archivo, 'noticias')
+      imagen_url = (await subirImagen(archivo, 'noticias')) ?? undefined
     }
 
-    await supabase.from('noticias').insert({
+    const datos = {
       titulo: data.get('titulo') as string,
       resumen: data.get('resumen') as string,
       contenido: data.get('contenido') as string,
       categoria: data.get('categoria') as string,
       fecha: data.get('fecha') as string,
-      imagen_url,
-      publicada: false,
-    })
+      ...(imagen_url ? { imagen_url } : {}),
+    }
+
+    if (editando) {
+      await supabase.from('noticias').update(datos).eq('id', editando.id)
+    } else {
+      await supabase.from('noticias').insert({ ...datos, publicada: false })
+    }
 
     form.reset()
     setMostrarForm(false)
+    setEditando(null)
     setGuardando(false)
     cargar()
   }
@@ -103,7 +124,7 @@ export default function AdminNoticiasPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-[#212121]">Noticias</h1>
         <button
-          onClick={() => setMostrarForm(!mostrarForm)}
+          onClick={() => { if (mostrarForm) { setMostrarForm(false); setEditando(null) } else { abrirNuevo() } }}
           className="bg-[#1E88E5] text-white font-semibold px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-[#1565C0] transition-colors text-sm"
         >
           <Plus size={18} />
@@ -111,31 +132,28 @@ export default function AdminNoticiasPage() {
         </button>
       </div>
 
-      {/* Formulario de nueva noticia */}
+      {/* Formulario de nueva noticia / edición */}
       {mostrarForm && (
-        <form onSubmit={handleCrear} className="bg-white rounded-2xl shadow-sm p-6 mb-6 space-y-4">
-          <h2 className="font-bold text-[#212121]">Nueva noticia</h2>
-          <input name="titulo" required placeholder="Título *" className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#1E88E5]" />
-          <textarea name="resumen" required rows={2} placeholder="Resumen *" className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#1E88E5] resize-none" />
-          <textarea name="contenido" required rows={5} placeholder="Contenido completo *" className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#1E88E5] resize-none" />
+        <form key={editando?.id ?? 'nuevo'} onSubmit={handleGuardar} className="bg-white rounded-2xl shadow-sm p-6 mb-6 space-y-4">
+          <h2 className="font-bold text-[#212121]">{editando ? `Editar noticia — ${editando.titulo}` : 'Nueva noticia'}</h2>
+          <input name="titulo" required placeholder="Título *" defaultValue={editando?.titulo} className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#1E88E5]" />
+          <textarea name="resumen" required rows={2} placeholder="Resumen *" defaultValue={editando?.resumen} className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#1E88E5] resize-none" />
+          <textarea name="contenido" required rows={5} placeholder="Contenido completo *" defaultValue={editando?.contenido} className="w-full border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#1E88E5] resize-none" />
           <div className="grid grid-cols-2 gap-4">
-            <select name="categoria" required className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#1E88E5] bg-white">
+            <select name="categoria" required defaultValue={editando?.categoria ?? ''} className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#1E88E5] bg-white">
               <option value="">Categoría *</option>
               {['Seguridad','Comunidad','Obras','Servicios','Institucional'].map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
-            <input name="fecha" type="date" required className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#1E88E5]" defaultValue={new Date().toISOString().split('T')[0]} />
+            <input name="fecha" type="date" required defaultValue={editando?.fecha ?? new Date().toISOString().split('T')[0]} className="border border-[#E0E0E0] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#1E88E5]" />
           </div>
-          <div>
-            <label className="text-xs font-semibold text-[#616161] block mb-1">Foto (opcional)</label>
-            <input name="imagen" type="file" accept="image/*" className="w-full text-sm" />
-          </div>
+          <CampoArchivo name="imagen" etiqueta={`Foto ${editando?.imagen_url ? '(dejar vacío para mantener la actual)' : '(opcional)'}`} />
           <div className="flex gap-3">
             <button type="submit" disabled={guardando} className="bg-[#1E88E5] text-white font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-[#1565C0] disabled:opacity-60">
-              {guardando ? 'Guardando...' : 'Guardar (como borrador)'}
+              {guardando ? 'Guardando...' : editando ? 'Guardar cambios' : 'Guardar (como borrador)'}
             </button>
-            <button type="button" onClick={() => setMostrarForm(false)} className="border border-[#E0E0E0] text-[#616161] px-5 py-2.5 rounded-xl text-sm hover:bg-gray-50">
+            <button type="button" onClick={() => { setMostrarForm(false); setEditando(null) }} className="border border-[#E0E0E0] text-[#616161] px-5 py-2.5 rounded-xl text-sm hover:bg-gray-50">
               Cancelar
             </button>
           </div>
@@ -174,6 +192,9 @@ export default function AdminNoticiasPage() {
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex items-center justify-end gap-2">
+                      <button onClick={() => abrirEditar(n)} className="p-1.5 rounded-lg hover:bg-[#E3F2FD] text-[#1E88E5]" title="Editar noticia">
+                        <Pencil size={16} />
+                      </button>
                       <button
                         onClick={() => abrirSelectorImagen(n.id)}
                         disabled={subiendoId === n.id}
