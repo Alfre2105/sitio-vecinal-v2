@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { Search, Users, Check, X, FileText, Plus, Trash2, Wallet, Pencil } from 'lucide-react'
 import GestionCuotasModal from '@/components/GestionCuotasModal'
 import { fetchTodasCuotas } from '@/lib/fetchCuotas'
+import { cuotaVencida } from '@/lib/cuotas'
 
 type Socio = {
   id: string
@@ -62,13 +63,14 @@ export default function AdminSociosPage() {
 
   async function cargarResumenCuotas() {
     // Suma todos los años, no solo el actual, para reflejar la deuda real
-    // acumulada (hay socios que deben meses de años anteriores).
+    // acumulada (hay socios que deben meses de años anteriores). Solo cuenta
+    // cuotas ya vencidas -- un mes futuro cargado por adelantado no es deuda.
     const data = await fetchTodasCuotas()
     const resumen: Record<string, { pagadas: number; pendientes: number; deuda: number }> = {}
     for (const c of data) {
       const r = resumen[c.socio_id] ?? { pagadas: 0, pendientes: 0, deuda: 0 }
       if (c.pagada) r.pagadas++
-      else { r.pendientes++; r.deuda += Number(c.monto) }
+      else if (cuotaVencida(c.mes, c.anio)) { r.pendientes++; r.deuda += Number(c.monto) }
       resumen[c.socio_id] = r
     }
     setResumenCuotas(resumen)

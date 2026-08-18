@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { X, CheckCircle, XCircle, Wallet } from 'lucide-react'
+import { cuotaVencida } from '@/lib/cuotas'
+import { X, CheckCircle, XCircle, Clock, Wallet } from 'lucide-react'
 
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
@@ -38,11 +39,13 @@ export default function GestionCuotasModal({ socioId, socioNombre, onClose, onCa
     setCargando(true)
     const [{ data }, { data: todasData }] = await Promise.all([
       supabase.from('cuotas').select('*').eq('socio_id', socioId).eq('anio', anio).order('mes', { ascending: true }),
-      supabase.from('cuotas').select('pagada, monto').eq('socio_id', socioId),
+      supabase.from('cuotas').select('pagada, monto, mes, anio').eq('socio_id', socioId),
     ])
     setCuotas((data as Cuota[]) ?? [])
-    const total = ((todasData as { pagada: boolean; monto: number }[]) ?? [])
-      .filter(c => !c.pagada)
+    // Solo cuenta cuotas ya vencidas -- un mes futuro cargado por
+    // adelantado (ej. generar los 12 meses del año) todavia no es deuda.
+    const total = ((todasData as { pagada: boolean; monto: number; mes: number; anio: number }[]) ?? [])
+      .filter(c => !c.pagada && cuotaVencida(c.mes, c.anio))
       .reduce((acc, c) => acc + Number(c.monto), 0)
     setDeudaTotal(total)
     setCargando(false)
@@ -85,7 +88,7 @@ export default function GestionCuotasModal({ socioId, socioNombre, onClose, onCa
 
   const porMes = new Map(cuotas.map(c => [c.mes, c]))
   const pagadas = cuotas.filter(c => c.pagada).length
-  const deuda = cuotas.filter(c => !c.pagada).reduce((acc, c) => acc + Number(c.monto), 0)
+  const deuda = cuotas.filter(c => !c.pagada && cuotaVencida(c.mes, c.anio)).reduce((acc, c) => acc + Number(c.monto), 0)
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50" onClick={onClose}>
@@ -112,7 +115,7 @@ export default function GestionCuotasModal({ socioId, socioNombre, onClose, onCa
           <div className="flex items-center gap-3 text-xs">
             <span className="text-green-600 font-medium">{pagadas} pagadas</span>
             <span className="text-red-500 font-medium">{cuotas.length - pagadas} pendientes</span>
-            {deuda > 0 && <span className="text-red-600 font-bold">Debe ${deuda.toLocaleString('es-AR')} en {anio}</span>}
+            {deuda > 0 && <span className="text-red-600 font-bold">Debe ${deuda.toLocaleString('es-AR')} en {anio} (vencidas)</span>}
           </div>
         </div>
 
@@ -123,18 +126,25 @@ export default function GestionCuotasModal({ socioId, socioNombre, onClose, onCa
             {MESES.map((nombreMes, i) => {
               const mes = i + 1
               const cuota = porMes.get(mes)
+              const vencida = cuota ? cuotaVencida(cuota.mes, cuota.anio) : false
+              const estilo = cuota?.pagada
+                ? 'bg-green-50 border-green-200'
+                : !cuota
+                  ? 'bg-gray-50 border-gray-200'
+                  : vencida
+                    ? 'bg-red-50 border-red-200'
+                    : 'bg-amber-50 border-amber-200'
               return (
-                <div
-                  key={mes}
-                  className={`rounded-xl p-3 border ${cuota?.pagada ? 'bg-green-50 border-green-200' : cuota ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}
-                >
+                <div key={mes} className={`rounded-xl p-3 border ${estilo}`}>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-semibold text-[#212121]">{nombreMes}</span>
                     {cuota ? (
-                      <button onClick={() => toggleaPagada(cuota)} title={cuota.pagada ? 'Marcar como no pagada' : 'Marcar como pagada'}>
+                      <button onClick={() => toggleaPagada(cuota)} title={cuota.pagada ? 'Marcar como no pagada' : vencida ? 'Vencida, marcar como pagada' : 'Aún no vence, marcar como pagada'}>
                         {cuota.pagada
                           ? <CheckCircle size={18} className="text-green-500" />
-                          : <XCircle size={18} className="text-red-400" />
+                          : vencida
+                            ? <XCircle size={18} className="text-red-400" />
+                            : <Clock size={18} className="text-amber-400" />
                         }
                       </button>
                     ) : (

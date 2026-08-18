@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchTodasCuotas } from '@/lib/fetchCuotas'
+import { cuotaVencida } from '@/lib/cuotas'
 import { Download, DollarSign, AlertCircle, Users, TrendingUp } from 'lucide-react'
 
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
@@ -61,12 +62,14 @@ export default function AdminReportesPage() {
 
   // Resumen por socio con TODOS los años — la deuda real de un socio puede
   // incluir meses o años anteriores, no solo el año que se está mirando.
+  // pendientes/deuda solo cuentan cuotas ya vencidas: una cuota de un mes
+  // futuro cargada por adelantado todavía no es deuda.
   const resumenPorSocio = useMemo(() => {
     const mapa: Record<string, { pagadas: number; pendientes: number; deuda: number }> = {}
     for (const c of cuotasTodas) {
       const r = mapa[c.socio_id] ?? { pagadas: 0, pendientes: 0, deuda: 0 }
       if (c.pagada) r.pagadas++
-      else { r.pendientes++; r.deuda += Number(c.monto) }
+      else if (cuotaVencida(c.mes, c.anio)) { r.pendientes++; r.deuda += Number(c.monto) }
       mapa[c.socio_id] = r
     }
     return mapa

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { LogIn, CheckCircle, XCircle, Landmark, User, Phone, MapPin } from 'lucide-react'
+import { cuotaVencida } from '@/lib/cuotas'
+import { LogIn, CheckCircle, XCircle, Clock, Landmark, User, Phone, MapPin } from 'lucide-react'
 
 const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
 
@@ -80,13 +81,15 @@ export default function LoginSocio() {
     setAnio(anioActual)
 
     // Deuda total: suma todos los años, no solo el actual, porque hay
-    // socios que arrastran meses o años anteriores sin pagar.
+    // socios que arrastran meses o años anteriores sin pagar. Solo cuenta
+    // cuotas ya vencidas -- una cuota de un mes futuro (cargada por
+    // adelantado) todavia no es deuda.
     const { data: todasCuotas } = await supabase
       .from('cuotas')
-      .select('pagada, monto')
+      .select('pagada, monto, mes, anio')
       .eq('socio_id', socioData.id)
-    const total = ((todasCuotas as { pagada: boolean; monto: number }[]) ?? [])
-      .filter(c => !c.pagada)
+    const total = ((todasCuotas as { pagada: boolean; monto: number; mes: number; anio: number }[]) ?? [])
+      .filter(c => !c.pagada && cuotaVencida(c.mes, c.anio))
       .reduce((acc, c) => acc + Number(c.monto), 0)
     setDeudaTotal(total)
 
@@ -96,8 +99,8 @@ export default function LoginSocio() {
 
   if (socio) {
     const pagadas = cuotas.filter(c => c.pagada).length
-    const pendientes = cuotas.filter(c => !c.pagada).length
-    const deuda = cuotas.filter(c => !c.pagada).reduce((acc, c) => acc + Number(c.monto), 0)
+    const pendientes = cuotas.filter(c => !c.pagada && cuotaVencida(c.mes, c.anio)).length
+    const deuda = cuotas.filter(c => !c.pagada && cuotaVencida(c.mes, c.anio)).reduce((acc, c) => acc + Number(c.monto), 0)
 
     return (
       <div className="space-y-5">
@@ -168,21 +171,29 @@ export default function LoginSocio() {
             <p className="text-[#9E9E9E] text-sm text-center py-4">No hay cuotas registradas para este año.</p>
           ) : (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-              {cuotas.map((c) => (
-                <div
-                  key={c.id}
-                  className={`rounded-xl p-3 text-center ${c.pagada ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}
-                >
-                  <div className="text-xs font-semibold text-[#212121]">{MESES[c.mes - 1]}</div>
-                  <div className="mt-1">
-                    {c.pagada
-                      ? <CheckCircle size={16} className="text-green-500 mx-auto" />
-                      : <XCircle size={16} className="text-red-400 mx-auto" />
-                    }
+              {cuotas.map((c) => {
+                const vencida = cuotaVencida(c.mes, c.anio)
+                const estilo = c.pagada
+                  ? 'bg-green-50 border border-green-200'
+                  : vencida
+                    ? 'bg-red-50 border border-red-200'
+                    : 'bg-gray-50 border border-gray-200'
+                return (
+                  <div key={c.id} className={`rounded-xl p-3 text-center ${estilo}`}>
+                    <div className="text-xs font-semibold text-[#212121]">{MESES[c.mes - 1]}</div>
+                    <div className="mt-1">
+                      {c.pagada
+                        ? <CheckCircle size={16} className="text-green-500 mx-auto" />
+                        : vencida
+                          ? <XCircle size={16} className="text-red-400 mx-auto" />
+                          : <Clock size={16} className="text-gray-400 mx-auto" />
+                      }
+                    </div>
+                    {c.monto && <div className="text-xs text-[#9E9E9E] mt-1">${c.monto}</div>}
+                    {!c.pagada && !vencida && <div className="text-[10px] text-gray-400 mt-0.5">Aún no vence</div>}
                   </div>
-                  {c.monto && <div className="text-xs text-[#9E9E9E] mt-1">${c.monto}</div>}
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
 
