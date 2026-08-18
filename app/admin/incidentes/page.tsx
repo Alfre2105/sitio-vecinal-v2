@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { CheckCircle, ShieldAlert, MapPin } from 'lucide-react'
+import { CheckCircle, ShieldAlert, MapPin, Trash2 } from 'lucide-react'
 
 type Incidente = {
   id: string
@@ -56,6 +56,12 @@ export default function AdminIncidentesPage() {
   async function marcarRevisado(id: string) {
     await supabase.from('incidentes').update({ revisado: true }).eq('id', id)
     setIncidentes(prev => prev.map(i => i.id === id ? { ...i, revisado: true } : i))
+  }
+
+  async function eliminar(id: string) {
+    if (!confirm('¿Eliminar este reporte? No se puede deshacer.')) return
+    await supabase.from('incidentes').delete().eq('id', id)
+    setIncidentes(prev => prev.filter(i => i.id !== id))
   }
 
   const filtrados = soloPendientes ? incidentes.filter(i => !i.revisado) : incidentes
@@ -128,15 +134,24 @@ export default function AdminIncidentesPage() {
                     Reportado el {new Date(i.created_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
-                {!i.revisado && (
+                <div className="shrink-0 flex flex-col items-stretch gap-2">
+                  {!i.revisado && (
+                    <button
+                      onClick={() => marcarRevisado(i.id)}
+                      className="text-xs text-[#43A047] hover:bg-green-50 font-semibold px-3 py-2 rounded-lg flex items-center justify-center gap-1 transition-colors border border-green-200"
+                    >
+                      <CheckCircle size={14} />
+                      Marcar revisado
+                    </button>
+                  )}
                   <button
-                    onClick={() => marcarRevisado(i.id)}
-                    className="shrink-0 text-xs text-[#43A047] hover:bg-green-50 font-semibold px-3 py-2 rounded-lg flex items-center gap-1 transition-colors border border-green-200"
+                    onClick={() => eliminar(i.id)}
+                    className="text-xs text-red-500 hover:bg-red-50 font-semibold px-3 py-2 rounded-lg flex items-center justify-center gap-1 transition-colors border border-red-200"
                   >
-                    <CheckCircle size={14} />
-                    Marcar revisado
+                    <Trash2 size={14} />
+                    Eliminar
                   </button>
-                )}
+                </div>
               </div>
             </div>
           ))

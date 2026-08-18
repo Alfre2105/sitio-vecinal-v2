@@ -314,6 +314,7 @@ ALTER TABLE incidentes ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Insertar incidentes" ON incidentes FOR INSERT WITH CHECK (true);
 CREATE POLICY "Lectura de incidentes" ON incidentes FOR SELECT USING (true);
 CREATE POLICY "Actualizar incidentes" ON incidentes FOR UPDATE USING (true);
+CREATE POLICY "Eliminar incidentes" ON incidentes FOR DELETE USING (true);
 -- Nota: en producción también se habilitaron SELECT y UPDATE en reservas_salon
 -- para anon (agregado julio 2026, no reflejado aquí originalmente) para que el
 -- panel admin pueda listar, confirmar/cancelar y editar reservas.
