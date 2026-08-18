@@ -48,7 +48,7 @@ export default function SeguridadPage() {
             { nombre: 'Policía', numero: '101' },
             { nombre: 'Bomberos', numero: '100' },
             { nombre: 'Ambulancia', numero: '107' },
-            { nombre: 'Vecinal', numero: '+54 297 540-2989' },
+            { nombre: 'Vecinal', numero: '297 540-2989' },
           ].map(({ nombre, numero }) => (
             <div key={nombre} className="text-center">
               <div className="text-2xl font-extrabold text-red-600">{numero}</div>
