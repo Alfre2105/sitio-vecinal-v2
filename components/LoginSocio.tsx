@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { cuotaVencida } from '@/lib/cuotas'
 import CarnetSocio from '@/components/CarnetSocio'
-import { LogIn, CheckCircle, XCircle, Clock, Landmark, User, Phone, MapPin, IdCard, ArrowLeft } from 'lucide-react'
+import { LogIn, CheckCircle, XCircle, Clock, Landmark, User, Phone, MapPin, IdCard, ArrowLeft, ShieldCheck } from 'lucide-react'
 
 const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
 
@@ -31,6 +31,13 @@ type CuotaData = {
   fecha_pago: string | null
 }
 
+type Movimiento = {
+  mes: number
+  anio: number
+  monto: number
+  fecha_pago: string
+}
+
 export default function LoginSocio() {
   const [login, setLogin] = useState('')
   const [buscando, setBuscando] = useState(false)
@@ -38,6 +45,7 @@ export default function LoginSocio() {
   const [socio, setSocio] = useState<SocioData | null>(null)
   const [cuotas, setCuotas] = useState<CuotaData[]>([])
   const [deudaTotal, setDeudaTotal] = useState(0)
+  const [movimientos, setMovimientos] = useState<Movimiento[]>([])
   const [anio, setAnio] = useState(new Date().getFullYear())
   const [mostrarCarnet, setMostrarCarnet] = useState(false)
 
@@ -95,6 +103,18 @@ export default function LoginSocio() {
       .filter(c => !c.pagada && cuotaVencida(c.mes, c.anio))
       .reduce((acc, c) => acc + Number(c.monto), 0)
     setDeudaTotal(total)
+
+    // Últimos movimientos: los pagos más recientes cruzando todos los años,
+    // para ver de un vistazo la actividad reciente sin tener que ir año por año.
+    const { data: pagosData } = await supabase
+      .from('cuotas')
+      .select('mes, anio, monto, fecha_pago')
+      .eq('socio_id', socioData.id)
+      .eq('pagada', true)
+      .not('fecha_pago', 'is', null)
+      .order('fecha_pago', { ascending: false })
+      .limit(5)
+    setMovimientos((pagosData as Movimiento[]) ?? [])
 
     await cargarCuotas(socioData.id, anioActual)
     setBuscando(false)
@@ -156,10 +176,34 @@ export default function LoginSocio() {
           </button>
         </div>
 
-        {deudaTotal > 0 && (
+        {deudaTotal > 0 ? (
           <div className="bg-red-50 border border-red-200 rounded-2xl p-5 text-center">
             <p className="text-red-700 font-bold">Deuda total acumulada: ${deudaTotal.toLocaleString('es-AR')}</p>
-            <p className="text-red-600 text-xs mt-1">Suma de todas las cuotas pendientes, de todos los años.</p>
+            <p className="text-red-600 text-xs mt-1">Suma de todas las cuotas vencidas y pendientes, de todos los años.</p>
+          </div>
+        ) : (
+          <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center justify-center gap-2">
+            <ShieldCheck size={20} className="text-green-600" />
+            <p className="text-green-700 font-semibold text-sm">Estás al día con las cuotas</p>
+          </div>
+        )}
+
+        {movimientos.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-sm p-6">
+            <h3 className="font-bold text-[#212121] mb-3">Últimos movimientos</h3>
+            <div className="space-y-2">
+              {movimientos.map((m, i) => (
+                <div key={i} className="flex items-center justify-between bg-[#F4F6F9] rounded-xl px-4 py-2.5">
+                  <div>
+                    <p className="text-sm font-medium text-[#212121]">Cuota {MESES[m.mes - 1]} {m.anio}</p>
+                    <p className="text-xs text-[#9E9E9E]">
+                      Pagada el {new Date(m.fecha_pago + 'T00:00:00').toLocaleDateString('es-AR')}
+                    </p>
+                  </div>
+                  <p className="text-sm font-semibold text-[#212121]">${Number(m.monto).toLocaleString('es-AR')}</p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
