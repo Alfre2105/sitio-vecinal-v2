@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { cuotaVencida } from '@/lib/cuotas'
-import { LogIn, CheckCircle, XCircle, Clock, Landmark, User, Phone, MapPin } from 'lucide-react'
+import CarnetSocio from '@/components/CarnetSocio'
+import { LogIn, CheckCircle, XCircle, Clock, Landmark, User, Phone, MapPin, IdCard, ArrowLeft } from 'lucide-react'
 
 const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
 
@@ -38,6 +39,7 @@ export default function LoginSocio() {
   const [cuotas, setCuotas] = useState<CuotaData[]>([])
   const [deudaTotal, setDeudaTotal] = useState(0)
   const [anio, setAnio] = useState(new Date().getFullYear())
+  const [mostrarCarnet, setMostrarCarnet] = useState(false)
 
   async function cargarCuotas(socioId: string, anioConsulta: number) {
     const { data: cuotasData } = await supabase
@@ -60,6 +62,7 @@ export default function LoginSocio() {
     setBuscando(true)
     setError('')
     setSocio(null)
+    setMostrarCarnet(false)
 
     const { data, error: err } = await supabase
       .from('socios')
@@ -97,6 +100,33 @@ export default function LoginSocio() {
     setBuscando(false)
   }
 
+  if (socio && mostrarCarnet) {
+    const origen = typeof window !== 'undefined' ? window.location.origin : ''
+    return (
+      <div className="space-y-5">
+        <CarnetSocio
+          nombre={socio.nombre}
+          apellido={socio.apellido}
+          numeroSocio={socio.numero_socio}
+          dni={socio.dni}
+          activo={socio.activo}
+          alDia={deudaTotal === 0}
+          qrUrl={`${origen}/carnet/${encodeURIComponent(socio.numero_socio)}`}
+        />
+        <p className="text-xs text-[#9E9E9E] text-center">
+          Mostrale este carnet al comercio para validar tus beneficios de socio.
+        </p>
+        <button
+          onClick={() => setMostrarCarnet(false)}
+          className="w-full flex items-center justify-center gap-2 text-sm text-[#1E88E5] font-semibold py-2"
+        >
+          <ArrowLeft size={16} />
+          Volver a mis datos
+        </button>
+      </div>
+    )
+  }
+
   if (socio) {
     const pagadas = cuotas.filter(c => c.pagada).length
     const pendientes = cuotas.filter(c => !c.pagada && cuotaVencida(c.mes, c.anio)).length
@@ -117,6 +147,13 @@ export default function LoginSocio() {
               </p>
             </div>
           </div>
+          <button
+            onClick={() => setMostrarCarnet(true)}
+            className="w-full mt-4 flex items-center justify-center gap-2 bg-white/15 hover:bg-white/25 transition-colors text-white font-semibold text-sm py-2.5 rounded-xl"
+          >
+            <IdCard size={18} />
+            Ver carnet digital
+          </button>
         </div>
 
         {deudaTotal > 0 && (
@@ -211,7 +248,7 @@ export default function LoginSocio() {
         </div>
 
         <button
-          onClick={() => { setSocio(null); setLogin('') }}
+          onClick={() => { setSocio(null); setLogin(''); setMostrarCarnet(false) }}
           className="w-full text-sm text-[#616161] underline"
         >
           Cerrar sesión
