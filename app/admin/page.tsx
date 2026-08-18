@@ -1,14 +1,15 @@
 export const dynamic = 'force-dynamic'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
-import { Newspaper, Calendar, Users, MessageSquare, Clock, CheckCircle } from 'lucide-react'
+import { Newspaper, Calendar, Users, MessageSquare, Clock, CheckCircle, ShieldAlert } from 'lucide-react'
 
 async function getResumen() {
-  const [noticias, reservasPendientes, socios, mensajesNoLeidos] = await Promise.all([
+  const [noticias, reservasPendientes, socios, mensajesNoLeidos, incidentesSinRevisar] = await Promise.all([
     supabase.from('noticias').select('id', { count: 'exact', head: true }),
     supabase.from('reservas_salon').select('id', { count: 'exact', head: true }).eq('estado', 'pendiente'),
     supabase.from('socios').select('id', { count: 'exact', head: true }).eq('activo', true),
     supabase.from('contacto_mensajes').select('id', { count: 'exact', head: true }).eq('leido', false),
+    supabase.from('incidentes').select('id', { count: 'exact', head: true }).eq('revisado', false),
   ])
 
   return {
@@ -16,6 +17,7 @@ async function getResumen() {
     reservasPendientes: reservasPendientes.count ?? 0,
     socios: socios.count ?? 0,
     mensajesNoLeidos: mensajesNoLeidos.count ?? 0,
+    incidentesSinRevisar: incidentesSinRevisar.count ?? 0,
   }
 }
 
@@ -36,6 +38,7 @@ export default async function AdminPage() {
     { label: 'Reservas pendientes', valor: resumen.reservasPendientes, icono: Clock, href: '/admin/reservas', color: 'bg-orange-50 text-orange-600', alerta: resumen.reservasPendientes > 0 },
     { label: 'Socios activos', valor: resumen.socios, icono: Users, href: '/admin/socios', color: 'bg-green-50 text-[#43A047]' },
     { label: 'Mensajes no leídos', valor: resumen.mensajesNoLeidos, icono: MessageSquare, href: '/admin/mensajes', color: 'bg-purple-50 text-purple-600', alerta: resumen.mensajesNoLeidos > 0 },
+    { label: 'Incidentes sin revisar', valor: resumen.incidentesSinRevisar, icono: ShieldAlert, href: '/admin/incidentes', color: 'bg-red-50 text-red-600', alerta: resumen.incidentesSinRevisar > 0 },
   ]
 
   return (

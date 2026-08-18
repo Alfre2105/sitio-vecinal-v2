@@ -155,6 +155,22 @@ CREATE TABLE IF NOT EXISTS contacto_mensajes (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- REPORTES DE INCIDENTES DE SEGURIDAD
+-- Formulario dedicado en /seguridad, separado de contacto_mensajes para que
+-- la Vecinal pueda distinguir y priorizar reportes de seguridad del resto de
+-- los mensajes. nombre/contacto son opcionales para permitir reporte anonimo.
+CREATE TABLE IF NOT EXISTS incidentes (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tipo TEXT NOT NULL CHECK (tipo IN ('robo', 'intento_robo', 'sospechoso', 'vandalismo', 'disturbios', 'otro')),
+  ubicacion TEXT NOT NULL,
+  fecha DATE NOT NULL DEFAULT CURRENT_DATE,
+  descripcion TEXT NOT NULL,
+  nombre TEXT,
+  contacto TEXT,
+  revisado BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- ENLACES DE INTERES
 -- Sitios externos utiles para los vecinos (cooperativa, ENCoSeP, municipio,
 -- etc.), mostrados en el footer. Sin flujo de aprobacion, siempre lo carga
@@ -291,6 +307,13 @@ CREATE POLICY "Historial es público" ON historial_barrio FOR SELECT USING (true
 -- Cualquiera puede insertar mensajes de contacto y reservas
 CREATE POLICY "Insertar mensajes de contacto" ON contacto_mensajes FOR INSERT WITH CHECK (true);
 CREATE POLICY "Insertar reservas" ON reservas_salon FOR INSERT WITH CHECK (true);
+-- Incidentes: insert publico desde /seguridad (permite reporte anonimo, sin
+-- nombre/contacto) y lectura/actualizacion (marcar revisado) desde
+-- /admin/incidentes, mismo patron de RLS abierto que el resto del panel admin.
+ALTER TABLE incidentes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Insertar incidentes" ON incidentes FOR INSERT WITH CHECK (true);
+CREATE POLICY "Lectura de incidentes" ON incidentes FOR SELECT USING (true);
+CREATE POLICY "Actualizar incidentes" ON incidentes FOR UPDATE USING (true);
 -- Nota: en producción también se habilitaron SELECT y UPDATE en reservas_salon
 -- para anon (agregado julio 2026, no reflejado aquí originalmente) para que el
 -- panel admin pueda listar, confirmar/cancelar y editar reservas.

@@ -1,4 +1,4 @@
-import FormularioContacto from '@/components/FormularioContacto'
+import FormularioIncidente from '@/components/FormularioIncidente'
 import { Shield, Phone, AlertTriangle, Users } from 'lucide-react'
 
 export const metadata = {
@@ -61,7 +61,7 @@ export default function SeguridadPage() {
       {/* Formulario de reporte */}
       <div>
         <h2 className="text-xl font-bold text-[#212121] mb-4">Reportar un incidente</h2>
-        <FormularioContacto />
+        <FormularioIncidente />
       </div>
     </div>
   )
