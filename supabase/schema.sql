@@ -94,6 +94,31 @@ CREATE TABLE IF NOT EXISTS cuotas (
   UNIQUE(socio_id, mes, anio)
 );
 
+-- NOTIFICACIONES AUTOMATICAS DE CUOTAS
+-- email_invalido se pone en true desde /api/webhooks/resend cuando un envio
+-- rebota (email inexistente/lleno/etc). Mientras este en true, el cron de
+-- /api/cron/notificaciones deja de intentarle mandar mail a ese socio -- ver
+-- lib/notificaciones.ts para la logica de que aviso le toca a cada quien.
+ALTER TABLE socios ADD COLUMN IF NOT EXISTS email_invalido BOOLEAN NOT NULL DEFAULT false;
+
+-- Un registro por cada aviso efectivamente disparado (o intentado). Sirve
+-- para no reenviar el mismo aviso dos veces (se busca por socio_id+tipo+mes+anio
+-- antes de mandar) y como historial visible en /admin/notificaciones.
+-- resend_email_id guarda el id que devuelve Resend al enviar, para poder
+-- cruzarlo con los webhooks de rebote y marcar el registro como 'rebotado'.
+CREATE TABLE IF NOT EXISTS notificaciones_enviadas (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  socio_id UUID NOT NULL REFERENCES socios(id) ON DELETE CASCADE,
+  tipo TEXT NOT NULL CHECK (tipo IN ('proximo_vencimiento', 'vencida', 'recordatorio_deuda')),
+  canal TEXT NOT NULL DEFAULT 'email' CHECK (canal IN ('email', 'whatsapp')),
+  estado TEXT NOT NULL DEFAULT 'enviado' CHECK (estado IN ('enviado', 'fallido', 'rebotado')),
+  mes INTEGER,
+  anio INTEGER,
+  detalle TEXT,
+  resend_email_id TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- TALLERES
 -- El dia/horario detallado de cada taller vive en las tablas de grilla
 -- semanal (hardcodeadas en app/actividades/page.tsx), no aca — la tarjeta
@@ -334,3 +359,11 @@ CREATE POLICY "Eliminar socios" ON socios FOR DELETE USING (true);
 -- panel admin (el gate real es la contraseña client-side de AdminGuard)
 CREATE POLICY "Insertar cuotas" ON cuotas FOR INSERT WITH CHECK (true);
 CREATE POLICY "Actualizar cuotas" ON cuotas FOR UPDATE USING (true);
+
+-- Notificaciones de cuotas: el cron y el webhook usan la service role key
+-- (bypassea RLS), pero /admin/notificaciones lee el historial con el cliente
+-- anon, mismo patron abierto que el resto del panel.
+ALTER TABLE notificaciones_enviadas ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Insertar notificaciones" ON notificaciones_enviadas FOR INSERT WITH CHECK (true);
+CREATE POLICY "Lectura de notificaciones" ON notificaciones_enviadas FOR SELECT USING (true);
+CREATE POLICY "Actualizar notificaciones" ON notificaciones_enviadas FOR UPDATE USING (true);

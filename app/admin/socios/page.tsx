@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Search, Users, Check, X, FileText, Plus, Trash2, Wallet, Pencil } from 'lucide-react'
+import { Search, Users, Check, X, FileText, Plus, Trash2, Wallet, Pencil, AlertTriangle } from 'lucide-react'
 import GestionCuotasModal from '@/components/GestionCuotasModal'
 import { fetchTodasCuotas } from '@/lib/fetchCuotas'
 import { cuotaVencida } from '@/lib/cuotas'
@@ -23,6 +23,7 @@ type Socio = {
   dni_foto_frente_url: string | null
   dni_foto_dorso_url: string | null
   comprobante_domicilio_url: string | null
+  email_invalido: boolean
 }
 
 async function verDocumento(path: string) {
@@ -329,7 +330,16 @@ export default function AdminSociosPage() {
                     <td className="px-5 py-4 text-[#616161] hidden sm:table-cell font-mono text-xs">{s.numero_socio}</td>
                     <td className="px-5 py-4 text-[#616161] hidden md:table-cell font-mono text-xs">{s.dni}</td>
                     <td className="px-5 py-4 hidden lg:table-cell">
-                      {s.email && <div className="text-xs text-[#616161]">{s.email}</div>}
+                      {s.email && (
+                        <div className="text-xs text-[#616161] flex items-center gap-1">
+                          {s.email}
+                          {s.email_invalido && (
+                            <span title="El email rebotó, conviene pedirle uno actualizado">
+                              <AlertTriangle size={12} className="text-red-500 shrink-0" />
+                            </span>
+                          )}
+                        </div>
+                      )}
                       {s.telefono && <div className="text-xs text-[#9E9E9E]">{s.telefono}</div>}
                     </td>
                     <td className="px-5 py-4 text-center">

@@ -8,3 +8,12 @@ export function cuotaVencida(mes: number, anio: number): boolean {
   const mesActual = hoy.getMonth() + 1
   return anio < anioActual || (anio === anioActual && mes <= mesActual)
 }
+
+const NOMBRES_MES = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+]
+
+export function nombreMes(mes: number): string {
+  return NOMBRES_MES[mes - 1] ?? String(mes)
+}

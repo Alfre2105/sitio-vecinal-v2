@@ -71,10 +71,27 @@ export type Database = {
           fecha_ingreso: string
           categoria: 'activo' | 'cadete' | 'vitalicio' | 'honorario' | 'adherente'
           activo: boolean
+          email_invalido: boolean
           created_at: string
         }
         Insert: Omit<Database['public']['Tables']['socios']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['socios']['Insert']>
+      }
+      notificaciones_enviadas: {
+        Row: {
+          id: string
+          socio_id: string
+          tipo: 'proximo_vencimiento' | 'vencida' | 'recordatorio_deuda'
+          canal: 'email' | 'whatsapp'
+          estado: 'enviado' | 'fallido' | 'rebotado'
+          mes: number | null
+          anio: number | null
+          detalle: string | null
+          resend_email_id: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['notificaciones_enviadas']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['notificaciones_enviadas']['Insert']>
       }
       cuotas: {
         Row: {
