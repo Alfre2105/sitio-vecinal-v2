@@ -51,7 +51,7 @@ export async function POST(request: Request) {
   if (socio) {
     await resend.emails.send({
       from: EMAIL_REMITENTE,
-      to: process.env.ADMIN_ALERT_EMAIL ?? 'alfregomezcr@gmail.com',
+      to: process.env.ADMIN_ALERT_EMAIL ?? 'vecinal.mosconi@gmail.com',
       subject: 'Email de un socio rebotó — revisar dirección',
       text: `El email de ${socio.nombre} ${socio.apellido} (${socio.email}) rebotó al mandarle un aviso de cuotas. Conviene pedirle un email actualizado desde /admin/socios.`,
     })
