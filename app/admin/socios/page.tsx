@@ -253,6 +253,7 @@ export default function AdminSociosPage() {
                     {(s.email || s.telefono) && (
                       <p className="text-sm text-[#9E9E9E]">{[s.email, s.telefono].filter(Boolean).join(' · ')}</p>
                     )}
+                    <p className="text-xs text-[#9E9E9E] mt-1">Se inscribió el {new Date(s.fecha_ingreso + 'T00:00:00').toLocaleDateString('es-AR')}</p>
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <button onClick={() => aprobar(s.id)} className="flex items-center gap-1.5 bg-green-50 text-green-700 font-semibold px-3 py-2 rounded-lg text-xs hover:bg-green-100">
