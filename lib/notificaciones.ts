@@ -8,6 +8,18 @@ const DIA_AVISO_PROXIMO = 5
 const DIA_AVISO_VENCIDA = 11
 const DIA_AVISO_RECORDATORIO = 15
 
+// Corte del padron en dos tandas para no mandar todos los avisos el mismo
+// dia (se agoto la cuota diaria de Resend el 2026-09-11 con 121/100 mails
+// en un solo dia 11). Con el padron real de septiembre 2026, cortar en 'L'
+// da el reparto mas parejo (57 vs 64 sobre 121 socios). Grupo B (M-Z) recibe
+// cada aviso un dia despues que el grupo A.
+const CORTE_APELLIDO_TANDA_B = 'L'
+
+export function tandaSocio(apellido: string): 0 | 1 {
+  const letra = (apellido || '').trim().charAt(0).toUpperCase()
+  return letra > CORTE_APELLIDO_TANDA_B ? 1 : 0
+}
+
 export type TipoAviso = 'proximo_vencimiento' | 'vencida' | 'recordatorio_deuda'
 
 export type CuotaAviso = { mes: number; anio: number; monto: number; pagada: boolean }
@@ -25,12 +37,16 @@ export type Aviso = {
 // Calcula, para un socio puntual, cual es el proximo aviso que le corresponde
 // (o null si no le toca ninguno hoy). `previas` son las notificaciones que ya
 // se le mandaron a ESE socio (filtradas antes de llamar esta funcion). Los
-// tres tipos de aviso estan atados a un dia fijo del mes, asi el socio (y
-// Alfredo) pueden anticipar exactamente cuando van a salir los mails.
-export function calcularAviso(cuotas: CuotaAviso[], previas: NotificacionPrevia[], hoy = new Date()): Aviso | null {
+// tres tipos de aviso estan atados a un dia fijo del mes (mas 1 dia para la
+// tanda B, ver tandaSocio), asi el socio (y Alfredo) pueden anticipar
+// aproximadamente cuando van a salir los mails.
+export function calcularAviso(cuotas: CuotaAviso[], previas: NotificacionPrevia[], tanda: 0 | 1 = 0, hoy = new Date()): Aviso | null {
   const anioActual = hoy.getFullYear()
   const mesActual = hoy.getMonth() + 1
   const diaActual = hoy.getDate()
+  const diaAvisoProximo = DIA_AVISO_PROXIMO + tanda
+  const diaAvisoVencida = DIA_AVISO_VENCIDA + tanda
+  const diaAvisoRecordatorio = DIA_AVISO_RECORDATORIO + tanda
 
   // Un 'fallido' (ej. cuota diaria de Resend agotada) no cuenta como enviado --
   // si no, ese socio se queda sin este aviso todo el mes, sin reintento. Solo
@@ -49,7 +65,7 @@ export function calcularAviso(cuotas: CuotaAviso[], previas: NotificacionPrevia[
   // agotada), yaEnviado sigue dando false y se reintenta al dia siguiente,
   // hasta que el dia 15 toma la posta el recordatorio de deuda.
   if (
-    diaActual >= DIA_AVISO_VENCIDA && diaActual < DIA_AVISO_RECORDATORIO &&
+    diaActual >= diaAvisoVencida && diaActual < DIA_AVISO_RECORDATORIO &&
     cuotaMesActual && !cuotaMesActual.pagada &&
     !yaEnviado('vencida', mesActual, anioActual)
   ) {
@@ -62,7 +78,7 @@ export function calcularAviso(cuotas: CuotaAviso[], previas: NotificacionPrevia[
   // deuda vieja, no le corresponde este aviso "suave" sino el de deuda.
   // Ventana 5-10, mismo motivo de reintento que el aviso de "vencida".
   if (
-    diaActual >= DIA_AVISO_PROXIMO && diaActual < DIA_AVISO_VENCIDA &&
+    diaActual >= diaAvisoProximo && diaActual < DIA_AVISO_VENCIDA &&
     cuotaMesActual && !cuotaMesActual.pagada &&
     vencidas.length === 1 &&
     !yaEnviado('proximo_vencimiento', mesActual, anioActual)
@@ -74,7 +90,7 @@ export function calcularAviso(cuotas: CuotaAviso[], previas: NotificacionPrevia[
   // 15-fin de mes: se manda una vez por mes mientras la deuda siga sin
   // saldarse, con el mismo reintento por 'fallido' que los otros dos avisos.
   if (
-    diaActual >= DIA_AVISO_RECORDATORIO &&
+    diaActual >= diaAvisoRecordatorio &&
     vencidas.length > 0 &&
     !yaEnviado('recordatorio_deuda', mesActual, anioActual)
   ) {

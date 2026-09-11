@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { resend, EMAIL_REMITENTE } from '@/lib/resend'
-import { calcularAviso, mensajeAviso, type CuotaAviso, type NotificacionPrevia } from '@/lib/notificaciones'
+import { calcularAviso, mensajeAviso, tandaSocio, type CuotaAviso, type NotificacionPrevia } from '@/lib/notificaciones'
 import { fetchTodasCuotas } from '@/lib/fetchCuotas'
 
 type Socio = { id: string; nombre: string; apellido: string; email: string }
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
   for (const socio of (socios as Socio[]) ?? []) {
     const cuotas = cuotasPorSocio.get(socio.id) ?? []
     const previas = previasPorSocio.get(socio.id) ?? []
-    const aviso = calcularAviso(cuotas, previas)
+    const aviso = calcularAviso(cuotas, previas, tandaSocio(socio.apellido))
     if (!aviso) continue
 
     const nombreCompleto = `${socio.nombre} ${socio.apellido}`
