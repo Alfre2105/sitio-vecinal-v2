@@ -12,7 +12,7 @@ export type TipoAviso = 'proximo_vencimiento' | 'vencida' | 'recordatorio_deuda'
 
 export type CuotaAviso = { mes: number; anio: number; monto: number; pagada: boolean }
 
-export type NotificacionPrevia = { tipo: TipoAviso; mes: number | null; anio: number | null; created_at: string }
+export type NotificacionPrevia = { tipo: TipoAviso; mes: number | null; anio: number | null; created_at: string; estado: string }
 
 export type Aviso = {
   tipo: TipoAviso
@@ -32,17 +32,24 @@ export function calcularAviso(cuotas: CuotaAviso[], previas: NotificacionPrevia[
   const mesActual = hoy.getMonth() + 1
   const diaActual = hoy.getDate()
 
+  // Un 'fallido' (ej. cuota diaria de Resend agotada) no cuenta como enviado --
+  // si no, ese socio se queda sin este aviso todo el mes, sin reintento. Solo
+  // 'enviado' o 'rebotado' (llego a salir, aunque despues rebotara) bloquean
+  // un reenvio.
   const yaEnviado = (tipo: TipoAviso, mes: number | null, anio: number | null) =>
-    previas.some(p => p.tipo === tipo && p.mes === mes && p.anio === anio)
+    previas.some(p => p.tipo === tipo && p.mes === mes && p.anio === anio && p.estado !== 'fallido')
 
   const vencidas = cuotas.filter(c => !c.pagada && cuotaVencida(c.mes, c.anio))
   const cuotaMesActual = cuotas.find(c => c.mes === mesActual && c.anio === anioActual)
 
   // Dia 11: la cuota del mes en curso paso su vencimiento (dia 10) sin pagarse.
   // Se manda una sola vez por mes, le toque a quien le toque (este al dia con
-  // el resto o arrastre deuda vieja).
+  // el resto o arrastre deuda vieja). Ventana 11-14 (no solo el dia 11 en
+  // punto): si el primer intento da 'fallido' (ej. cuota diaria de Resend
+  // agotada), yaEnviado sigue dando false y se reintenta al dia siguiente,
+  // hasta que el dia 15 toma la posta el recordatorio de deuda.
   if (
-    diaActual === DIA_AVISO_VENCIDA &&
+    diaActual >= DIA_AVISO_VENCIDA && diaActual < DIA_AVISO_RECORDATORIO &&
     cuotaMesActual && !cuotaMesActual.pagada &&
     !yaEnviado('vencida', mesActual, anioActual)
   ) {
@@ -53,8 +60,9 @@ export function calcularAviso(cuotas: CuotaAviso[], previas: NotificacionPrevia[
   // del mes en curso (vencidas.length === 1 porque cuotaVencida ya cuenta la
   // cuota del mes en curso como vencida desde el dia 1). Si ademas arrastra
   // deuda vieja, no le corresponde este aviso "suave" sino el de deuda.
+  // Ventana 5-10, mismo motivo de reintento que el aviso de "vencida".
   if (
-    diaActual === DIA_AVISO_PROXIMO &&
+    diaActual >= DIA_AVISO_PROXIMO && diaActual < DIA_AVISO_VENCIDA &&
     cuotaMesActual && !cuotaMesActual.pagada &&
     vencidas.length === 1 &&
     !yaEnviado('proximo_vencimiento', mesActual, anioActual)
@@ -62,10 +70,11 @@ export function calcularAviso(cuotas: CuotaAviso[], previas: NotificacionPrevia[
     return { tipo: 'proximo_vencimiento', mes: mesActual, anio: anioActual, monto: Number(cuotaMesActual.monto), cantidadPendientes: vencidas.length }
   }
 
-  // Dia 15: recordatorio de deuda acumulada (1 o mas periodos), se repite
-  // todos los meses en esa fecha mientras la deuda siga sin saldarse.
+  // Dia 15: recordatorio de deuda acumulada (1 o mas periodos). Ventana
+  // 15-fin de mes: se manda una vez por mes mientras la deuda siga sin
+  // saldarse, con el mismo reintento por 'fallido' que los otros dos avisos.
   if (
-    diaActual === DIA_AVISO_RECORDATORIO &&
+    diaActual >= DIA_AVISO_RECORDATORIO &&
     vencidas.length > 0 &&
     !yaEnviado('recordatorio_deuda', mesActual, anioActual)
   ) {

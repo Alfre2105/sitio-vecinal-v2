@@ -26,7 +26,7 @@ export async function GET(request: Request) {
       .eq('email_invalido', false)
       .not('email', 'is', null),
     fetchTodasCuotas(),
-    supabase.from('notificaciones_enviadas').select('socio_id, tipo, mes, anio, created_at'),
+    supabase.from('notificaciones_enviadas').select('socio_id, tipo, mes, anio, created_at, estado'),
   ])
 
   const cuotasPorSocio = new Map<string, CuotaAviso[]>()
@@ -38,7 +38,7 @@ export async function GET(request: Request) {
   const previasPorSocio = new Map<string, NotificacionPrevia[]>()
   for (const n of notificacionesPrevias ?? []) {
     if (!previasPorSocio.has(n.socio_id)) previasPorSocio.set(n.socio_id, [])
-    previasPorSocio.get(n.socio_id)!.push({ tipo: n.tipo, mes: n.mes, anio: n.anio, created_at: n.created_at })
+    previasPorSocio.get(n.socio_id)!.push({ tipo: n.tipo, mes: n.mes, anio: n.anio, created_at: n.created_at, estado: n.estado })
   }
 
   let enviados = 0
